@@ -40,7 +40,8 @@ import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
 @RunWith(Parameterized.class)
 public class TestInferenceEnginesOnData {
 
-	
+    private ILogger logger = LogIntoJavaLogger.getLogger(TestInferenceEnginesOnData.class);
+
 	@Parameters(name="{0} on {1}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
@@ -224,7 +225,7 @@ public class TestInferenceEnginesOnData {
 	
 		System.err.flush();
 
-		InferencePerformanceUtils.singleton.display();
+		InferencePerformanceUtils.singleton.display(logger);
 		ie.clearEvidence();
 		InferencePerformanceUtils.singleton.reset();
 		
@@ -245,7 +246,7 @@ public class TestInferenceEnginesOnData {
 					1e-8
 					);
 
-		InferencePerformanceUtils.singleton.display();
+		InferencePerformanceUtils.singleton.display(logger);
 		InferencePerformanceUtils.singleton.reset();
 	}
 
@@ -285,7 +286,7 @@ public class TestInferenceEnginesOnData {
 						);
 			}
 			
-			InferencePerformanceUtils.singleton.display();
+			InferencePerformanceUtils.singleton.display(logger);
 
 			ie.clearEvidence();
 			InferencePerformanceUtils.singleton.reset();
@@ -320,7 +321,7 @@ public class TestInferenceEnginesOnData {
 					);
 		}
 		
-		InferencePerformanceUtils.singleton.display();
+		InferencePerformanceUtils.singleton.display(logger);
 
 		ie.clearEvidence();
 		InferencePerformanceUtils.singleton.reset();
@@ -378,7 +379,7 @@ public class TestInferenceEnginesOnData {
 				}
 			}
 			
-			InferencePerformanceUtils.singleton.display();
+			InferencePerformanceUtils.singleton.display(logger);
 
 			ie.clearEvidence();
 			InferencePerformanceUtils.singleton.reset();
@@ -447,7 +448,7 @@ public class TestInferenceEnginesOnData {
 							
 				}
 				
-				InferencePerformanceUtils.singleton.display();
+				InferencePerformanceUtils.singleton.display(logger);
 				
 				break;
 			} catch (IllegalArgumentException e) {
@@ -475,7 +476,7 @@ public class TestInferenceEnginesOnData {
 			System.out.flush();
 		}
 		
-		InferencePerformanceUtils.singleton.display();
+		InferencePerformanceUtils.singleton.display(logger);
 		
 	}
 	

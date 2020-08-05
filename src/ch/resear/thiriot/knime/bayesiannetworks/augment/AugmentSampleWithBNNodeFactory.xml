@@ -12,9 +12,27 @@
     </shortDescription>
     
     <fullDescription>
-        <intro>Insert long description here...</intro>
+        <intro>
+        Adds columns to the table by adding all the variables of the Bayesian network which are not yet columns of the datatable. 
+        To generate the values of the additional columns, the node will try to find all the column names which match the 
+        name of a variable of the Bayesian network, and will use them as evidence to condition the probabilities of the 
+        missing columns with the ones of the existing ones.
         
-       
+        <p>
+        Computing time depends on the size of the Bayesian network: size of the Conditional Probability Tables, 
+        count of them. 
+        The behavior is not linear thanks to caching of computations: the more lines your compute, the quicker it goes.
+        </p>
+        
+        <p>
+        The random numbers are generated using the <a href="https://dst.lbl.gov/ACSSoftware/colt/">Colt library</a> 
+        (see <a href="https://en.wikipedia.org/wiki/Colt_(libraries)">the wikipedia page</a>) published by CERN. 
+        </p>
+        </intro>
+        
+        <option name="Seed">Enables you to freeze the Random Number Generator used to sample. 
+        If you do not understand what this means, keep it unchecked so a different result is produced at every run.</option>
+        
     </fullDescription>
     
     <ports>

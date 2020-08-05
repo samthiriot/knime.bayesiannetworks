@@ -9,7 +9,6 @@ import org.junit.Test;
 
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.Factor;
 
 public class TestFactors {
 

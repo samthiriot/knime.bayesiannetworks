@@ -46,7 +46,7 @@ public class BayesianNetworkPortObject extends AbstractSimplePortObject {
 	 */
 	@Override
 	public String getSummary() {
-		return "Bayesian network";
+		return "Bayesian Network with "+bn.getNodes().size()+" nodes";
 	}
 
 	/* (non-Javadoc)
@@ -54,7 +54,6 @@ public class BayesianNetworkPortObject extends AbstractSimplePortObject {
 	 */
 	@Override
 	public BayesianNetworkPortSpec getSpec() {
-		// TODO Auto-generated method stub
 		return new BayesianNetworkPortSpec();
 	}
 

@@ -97,8 +97,7 @@ public abstract class AbstractInferenceEngine {
 			if (logger.isInfoEnabled())
 				logger.info("computing probability for "+n+" ("+n.getDomainSize()+" values: "+n.getDomain()+")");
 			retrieveConditionalProbability(n);	
-			InferencePerformanceUtils.singleton.display();
-
+			InferencePerformanceUtils.singleton.display(logger);
 		}
 		
 	}
@@ -118,7 +117,7 @@ public abstract class AbstractInferenceEngine {
 	public final double getConditionalProbability(NodeCategorical n, String s) {
 		
 		// check args
-		if (!n.getDomain().contains(s))
+		if (!n.contains(s))
 			throw new IllegalArgumentException("there is no value "+s+" in the domain of variable "+n+" (use one of "+n.getDomain()+")");
 		
 		// if there is no evidence, just return the prior probability !
@@ -267,7 +266,7 @@ public abstract class AbstractInferenceEngine {
 					value = originalEvidence.get(n);
 			else {
 				
-				double random = rng.nextDouble();
+				final double random = rng.nextDouble();
 				// pick up a value
 				double cumulated = 0.;
 				

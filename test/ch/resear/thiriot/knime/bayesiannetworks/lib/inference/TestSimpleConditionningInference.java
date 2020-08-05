@@ -5,10 +5,7 @@ import static org.junit.Assert.assertEquals;
 import java.util.Date;
 
 import org.junit.Test;
-import org.knime.core.node.NodeLogger;
 
-import cern.jet.random.AbstractContinousDistribution;
-import cern.jet.random.Uniform;
 import cern.jet.random.engine.MersenneTwister;
 import cern.jet.random.engine.RandomEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.LogIntoJavaLogger;

@@ -231,10 +231,12 @@ public class RecursiveConditionningEngine extends AbstractInferenceEngine {
 			
 			this.dtreeWithEvidence = DNode.eliminationOrder2DTree(bn, eliminationOrderWithEvidence);
 			this.dtreeWithEvidence.reduce(evidenceVariable2value);
+			
+			/* TODO only for debug o_O
 			this.dtreeWithEvidence.exportAsGraphviz(new File("/tmp/dtree_evidence_cutset.dot"), "cutset");
 			this.dtreeWithEvidence.exportAsGraphviz(new File("/tmp/dtree_evidence_context.dot"), "context");
 			this.dtreeWithEvidence.exportAsGraphviz(new File("/tmp/dtree_evidence_varsUnion.dot"), "varsUnion");
-
+			 	*/
 
 			logger.info("generated dtree with evidence "+evidenceVariable2value+":\n" + dtreeWithEvidence);
 		

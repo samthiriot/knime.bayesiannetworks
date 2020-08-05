@@ -12,14 +12,16 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.LogIntoJavaLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.DNode;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.EliminationOrderDeepFirstSearch;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.InferencePerformanceUtils;
 
 public class TestDTree {
 
+    private ILogger logger = LogIntoJavaLogger.getLogger(TestDTree.class);
+
+    
 	@Before
 	public void setUp() throws Exception {
 	}
@@ -118,7 +120,7 @@ public class TestDTree {
 				Math.pow(1, -8)
 				);
 		
-		InferencePerformanceUtils.singleton.display();
+		InferencePerformanceUtils.singleton.display(logger);
 
 		
 	}
@@ -167,7 +169,7 @@ public class TestDTree {
 						)),
 				Math.pow(1, -8)
 				);
-		InferencePerformanceUtils.singleton.display();
+		InferencePerformanceUtils.singleton.display(logger);
 	}
 	
 
@@ -215,7 +217,7 @@ public class TestDTree {
 				Math.pow(1, -8)
 				);
 		
-		InferencePerformanceUtils.singleton.display();
+		InferencePerformanceUtils.singleton.display(logger);
 	}
 	
 
@@ -262,6 +264,6 @@ public class TestDTree {
 				Math.pow(1, -8)
 				);
 		
-		InferencePerformanceUtils.singleton.display();
+		InferencePerformanceUtils.singleton.display(logger);
 	}
 }

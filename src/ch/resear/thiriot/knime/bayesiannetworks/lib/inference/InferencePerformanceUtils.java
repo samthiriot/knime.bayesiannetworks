@@ -30,8 +30,6 @@ public class InferencePerformanceUtils {
 
 	public static final InferencePerformanceUtils singleton = new InferencePerformanceUtils();
 	
-	private ILogger logger = LogIntoJavaLogger.getLogger(InferencePerformanceUtils.class);
-
 	public final boolean enabled = true;
 	
 	private int countMultiply = 0;
@@ -56,7 +54,7 @@ public class InferencePerformanceUtils {
 		countMultiply++;
 	}
 	
-	public void display() {
+	public void display(ILogger logger) {
 		logger.info("multiplication: "+countMultiply+
 				" additions:"+countAdditions
 				+ ", cache hits:"+cacheHit

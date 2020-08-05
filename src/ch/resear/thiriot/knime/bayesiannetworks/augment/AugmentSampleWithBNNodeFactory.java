@@ -3,7 +3,6 @@ package ch.resear.thiriot.knime.bayesiannetworks.augment;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeFactory;
 import org.knime.core.node.NodeView;
-import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 
 /**
  * <code>NodeFactory</code> for the "AugmentSampleWithBNNode" Node.
@@ -52,7 +51,8 @@ public class AugmentSampleWithBNNodeFactory
      */
     @Override
     public NodeDialogPane createNodeDialogPane() {
-        return new DefaultNodeSettingsPane();
+        return new AugmentSampleWithBNNodeDialog();
+
     }
 
 }

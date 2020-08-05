@@ -8,25 +8,18 @@
     <name>XML BIF BN Reader</name>
     
     <shortDescription>
-        Read a Bayesian network from the XML BIF format
+        Read a Bayesian network stored in a file in XML BIF format
     </shortDescription>
     
     <fullDescription>
-        <intro>Insert long description here...</intro>
+        <intro>
+        Read a Bayesian network stored in XML BIF format. 
+        This format is used by platforms such as WEKA, and graphical editors such as JavaBayes, Genie and Netica or Samiam. 
+        This format is documented <a href="http://www.cs.cmu.edu/afs/cs/user/fgcozman/www/Research/InterchangeFormat/">on the website of the Carnegie Mellon University</a>.  
+        .</intro>
         
         
-        <option name="short name of first option (like in the dialog)">description of first option</option>
-        <option name="short name of second option (like in the dialog)">description of second option</option>
-        <!-- possibly more options that can also be grouped by tabs -->
-        <!--
-        <tab name="Standard Options">
-            <option name="short name of first option (like in the dialog)">description of first option</option>
-            <option name="short name of second option (like in the dialog)">description of second option</option>
-        </tab>
-        <tab name="Advanced Options">
-            <option name="short name of first advanced option (like in the dialog)">description of first advanced option</option>
-        </tab>
-        -->
+        <option name="file">the file to read</option>
     </fullDescription>
     
     <ports>

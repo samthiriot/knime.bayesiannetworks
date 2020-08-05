@@ -14,27 +14,35 @@
     </shortDescription>
     
     <fullDescription>
-        <intro>Insert long description here...</intro>
+        <intro>
+        Using a Bayesian network which describes densities of probabilities, 
+        this node generates a data table  
+        with columns corresponding the variables of the BN, and the content of cells being the categories of the variables.
+        
+        <p>
+        Computing time depends on the size of the Bayesian network: size of the Conditional Probability Tables, 
+        count of them. 
+        The behavior is not linear thanks to caching of computations: the more lines your compute, the quicker it goes.
+        </p>
+        
+        <p>
+        The random numbers are generated using the <a href="https://dst.lbl.gov/ACSSoftware/colt/">Colt library</a> 
+        (see <a href="https://en.wikipedia.org/wiki/Colt_(libraries)">the wikipedia page</a>) published by CERN. 
+        </p>
+        </intro>
         
         
-        <option name="short name of first option (like in the dialog)">description of first option</option>
-        <option name="short name of second option (like in the dialog)">description of second option</option>
-        <!-- possibly more options that can also be grouped by tabs -->
-        <!--
-        <tab name="Standard Options">
-            <option name="short name of first option (like in the dialog)">description of first option</option>
-            <option name="short name of second option (like in the dialog)">description of second option</option>
-        </tab>
-        <tab name="Advanced Options">
-            <option name="short name of first advanced option (like in the dialog)">description of first advanced option</option>
-        </tab>
-        -->
+        <option name="Samples">How many lines to sample (generate)</option>
+        <option name="Seed">Enables you to freeze the Random Number Generator used to sample. 
+        If you do not understand what this means, keep it unchecked so a different result is produced at every run.</option>
+        
+        
     </fullDescription>
     
     <ports>
         <inPort index="0" name="Bayesian network">Bayesian network</inPort>
         <!-- possibly more input ports here-->
-        <outPort index="0" name="sample">Sample generated from the Bayesian network</outPort>
+        <outPort index="0" name="sample">Samples generated from the Bayesian network</outPort>
         <!-- possibly more output ports here-->
     </ports>    
 </knimeNode>

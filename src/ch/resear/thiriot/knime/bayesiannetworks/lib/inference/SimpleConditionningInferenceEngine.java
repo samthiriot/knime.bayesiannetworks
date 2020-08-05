@@ -107,7 +107,8 @@ public class SimpleConditionningInferenceEngine extends AbstractInferenceEngine 
 		}
 		if (known == done.length-1) {
 			// we know all the values but one
-			logger.debug("we can save one computation here by doing p(X=x)=1 - sum(p(X=^x))");
+			if (logger.isDebugEnabled())
+				logger.debug("we can save one computation here by doing p(X=x)=1 - sum(p(X=^x))");
 			double total = 1.;
 			for (double d : done) {
 				if (d>=0)
@@ -265,8 +266,8 @@ public class SimpleConditionningInferenceEngine extends AbstractInferenceEngine 
 			
 			double p = this.bn.jointProbability(n2v, Collections.emptyMap());
 			
-			if (logger.isInfoEnabled())
-				logger.info("p("+n2v+")="+p);
+			if (logger.isDebugEnabled())
+				logger.debug("p("+n2v+")="+p);
 			
 			res += p;
 			InferencePerformanceUtils.singleton.incAdditions();
@@ -356,7 +357,11 @@ public class SimpleConditionningInferenceEngine extends AbstractInferenceEngine 
 											String nv,
 											Map<NodeCategorical,String> evidence) {
 						
-		double pFree = this.sumProbabilities(evidence, selectRelevantVariables((NodeCategorical)null, evidence, bn.nodes)); // optimisation: elimination of irrelevant variables
+		double pFree = this.sumProbabilities(
+				evidence, 
+				selectRelevantVariables((NodeCategorical)null, 
+						evidence, 
+						bn.nodes)); // optimisation: elimination of irrelevant variables
 
 		if (logger.isDebugEnabled())
 			logger.debug("computing p(*=*|"+n.name+"="+nv+")");

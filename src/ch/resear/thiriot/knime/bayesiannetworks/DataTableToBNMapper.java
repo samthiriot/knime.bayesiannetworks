@@ -148,7 +148,7 @@ public class DataTableToBNMapper {
     		
     		res = cell.toString();
     		cell2string.put(cell, res);
-    		logger.error("adding the mapping: "+cell+" => "+cell.toString());
+    		logger.debug("unknown value for variable "+node+"="+cell+" (we knew "+cell2string.keySet()+") => adding the mapping to "+cell.toString());
     		// try to identify what we talk about. 
     		//
     			

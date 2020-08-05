@@ -151,7 +151,7 @@ public final class BestInferenceEngine extends AbstractInferenceEngine {
 		
 		// sample without evidence: the best solution is always simple conditionning !
 		if (evidenceVariable2value.isEmpty())
-			getSimpleConditionningInferenceEngine().sampleOne();
+			return getSimpleConditionningInferenceEngine().sampleOne();
 			
 		AbstractInferenceEngine ie = null;
 		

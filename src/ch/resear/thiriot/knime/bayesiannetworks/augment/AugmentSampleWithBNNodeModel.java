@@ -9,7 +9,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.junit.runner.manipulation.NoTestsRemainException;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataRow;
@@ -26,10 +28,12 @@ import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.defaultnodesettings.SettingsModelSeed;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 
+import cern.colt.Version;
 import cern.jet.random.engine.MersenneTwister;
 import cern.jet.random.engine.RandomEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.DataTableToBNMapper;
@@ -39,6 +43,9 @@ import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwor
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.AbstractInferenceEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.BestInferenceEngine;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.EliminationInferenceEngine;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.InferencePerformanceUtils;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.RecursiveConditionningEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortObject;
 
 
@@ -55,6 +62,14 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
             .getLogger(AugmentSampleWithBNNodeModel.class);
     private static final ILogger ilogger = new LogIntoNodeLogger(logger);
 
+
+    private final SettingsModelSeed m_seed = 
+    		new SettingsModelSeed(
+    				"seed", 
+    				(int)System.currentTimeMillis(), 
+    				false);
+
+    
     /**
      * Constructor for the node model.
      */
@@ -90,9 +105,19 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
     	} catch (ClassCastException e) {
     		throw new IllegalArgumentException("The first input should be a Bayesian network", e);
     	}
+    	    	
+        // retrieve the seed parameter
+    	int seed; 
+    	if (m_seed.getIsActive()) {
+    		seed = (int)m_seed.getLongValue();
+    		if ((long)seed != m_seed.getLongValue())
+    			logger.info("the seed was converted from long "+m_seed.getLongValue()+" to int "+seed+"; this should have no impact for you");
+    	} else 
+    		seed = (int)System.currentTimeMillis();
     	
-    	// no parameter to retrieve
     	
+    	exec.setMessage("preparing mappings");
+
     	// define what we will add as columns
     	Map<NodeCategorical,DataTableToBNMapper> node2mapper = DataTableToBNMapper.createMapper(bn, ilogger);
     	
@@ -111,9 +136,33 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
     			nodeToAdd2idx.put(n, sample.getDataTableSpec().getColumnNames().length + nodeToAdd2idx.size());
     		}
     	}
-    	logger.info("will use columns "+nodesForEvidence+" as evidence in the Bayesian network");
-    	logger.info("will create columns with variables "+nodesToAdd+" from the Bayesian network");
     	
+
+    	if (nodesToAdd.isEmpty()) {
+    		String w = "we found no variable in the Bayesian network which would miss in the table. The node will just return the input table.";
+    		setWarningMessage(w);
+    		logger.warn(w);
+    		return new BufferedDataTable[]{sample};
+    	}
+    	
+
+    	if (nodesForEvidence.isEmpty()){
+    		logger.warn("we found no column in the table matching the names of variable in the Bayesian network. So the additional columns will be purely random, and independant of the columns of the input table.");
+    		logger.warn("the Bayesian network contains as variable names: "+bn.getNodes().stream().map(n -> n.name).collect(Collectors.joining(",")));
+    		setWarningMessage("no match between columns and variables. The additional columns are independant of the existing ones");
+    	} else {
+	    	logger.info("will use "+nodesForEvidence.size()+" columns from the KNIME table as evidence in the Bayesian network");
+	    	for (NodeCategorical n: nodesForEvidence) {
+	    		logger.info("\tthe column \""+n.name+"\" will be used as evidence for the variable "+n+" in the Bayesian network");	
+	    	}
+    	}
+    	logger.info("will create "+nodesToAdd.size()+" columns to the table using values from the Bayesian network");
+    	for (NodeCategorical n: nodesToAdd) {
+    		logger.info("\tthe variable "+n+" will be used to add a column named \""+n.name+"\"");
+    	}
+    	
+    	exec.setMessage("preparing the output table");
+
     	// create specs
     	DataColumnSpec[] columnSpecs = new DataColumnSpec[
     	                                  sample.getDataTableSpec().getColumnNames().length
@@ -129,28 +178,39 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
         BufferedDataContainer container = exec.createDataContainer(outputSpec);
 
     	// initialize a Bayesian inference engine
+        exec.setMessage("init of the random engine");
+    	logger.info("generating random numbers using the MersenneTwister pseudo-random number generator with seed "+seed+", as implemented in the COLT library "
+        		+Version.getMajorVersion()+"."+Version.getMinorVersion()+"."+Version.getMicroVersion());
         
-        // TODO retrieve the seed
-    	final int seed = 5; // TODO
-    	
-        logger.debug("random numbers will be generated using the MersenneTwister pseudo random number generator from the COLT library");
         final RandomEngine random = new MersenneTwister(seed);
         
-        final AbstractInferenceEngine engine = new BestInferenceEngine(ilogger, random, bn);
-        
+        // TODO ?final AbstractInferenceEngine engine = new BestInferenceEngine(ilogger, random, bn);
+        EliminationInferenceEngine engine = new EliminationInferenceEngine(ilogger, random, bn);
+        //AbstractInferenceEngine engine = new RecursiveConditionningEngine(ilogger, random, bn);
+
+		
     	// iterate each row of data, and learn the count to later fill in the BN
     	Iterator<DataRow> itRows = sample.iterator();
     	
     	Set<NodeCategorical> failedNodes = new HashSet<NodeCategorical>();
     	
+    	final long timestart = System.currentTimeMillis();
+    	
+    	InferencePerformanceUtils.singleton.reset();
+
     	// TODO manage long!!!
     	int rowIdx = 0;
     	while (itRows.hasNext()) {
     	
-    		DataRow row = itRows.next();
+		    // check if the execution monitor was canceled
+            exec.checkCanceled();
+            exec.setProgress(
+            		(double)(rowIdx + 1) / sample.size(), 
+            		"augmenting row " + rowIdx);
+        
+            DataRow row = itRows.next();
         	
     		// add evidence from the row
-    		engine.clearEvidence();
     		for (NodeCategorical nodeForEvidence: nodeEvidence2idx.keySet()) {
     			DataCell val = row.getCell(nodeEvidence2idx.get(nodeForEvidence));
     			
@@ -159,6 +219,7 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
     					node2mapper.get(nodeForEvidence).getStringValueForCell(val)
     					);
     		}
+    		engine.compute();
     		//System.err.println("p(evidence): "+engine.getProbabilityEvidence());
     		
     		// copy the past results
@@ -180,23 +241,23 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
     		// append
         	container.addRowToTable(
         			new DefaultRow(
-	        			new RowKey("Row " + rowIdx), 
+        				row.getKey(), 
 	        			results
 	        			)
         			);
     		
 
-    		if (rowIdx % 100 == 0) { // TODO granularity?
-	            // check if the execution monitor was canceled
-	            exec.checkCanceled();
-	            exec.setProgress(
-	            		(double)rowIdx / sample.size(), 
-	            		"augmenting row " + rowIdx);
-        	}
     		rowIdx++;
     	}
     	
+    	final long timeend = System.currentTimeMillis();
+    	final long durationms = (timeend - timestart);
+    	logger.info("inference took "+(durationms/sample.size())+"ms per line");
+    	
+    	InferencePerformanceUtils.singleton.display(ilogger);
+    	
         // once we are done, we close the container and return its table
+        exec.setProgress(100, "closing the output table");
         container.close();
         BufferedDataTable out = container.getTable();
         return new BufferedDataTable[]{out};
@@ -208,36 +269,14 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
      */
     @Override
     protected void reset() {
-        // TODO Code executed on reset.
-        // Models build during execute are cleared here.
-        // Also data handled in load/saveInternals will be erased here.
+
+    	// nothing to do
     }
 
     @Override
 	protected PortObjectSpec[] configure(PortObjectSpec[] inSpecs) throws InvalidSettingsException {
 	
-    	// TODO 
         return new DataTableSpec[]{null};
-
-        /*
-    	try {
-        	CategoricalBayesianNetwork bn = null;
-
-    		BayesianNetworkPortObject capsule = (BayesianNetworkPortObject)inObjects[0];
-    		bn = capsule.getBN();
-    		
-    		return new DataTableSpec[]{ new DataTableSpec(createSpecsForBN(bn)) };
-    		
-    	} catch (RuntimeException e) {
-            return new DataTableSpec[]{null};
-    	}
-    	*/
-        
-    	 // TODO: check if user settings are available, fit to the incoming
-        // table structure, and the incoming types are feasible for the node
-        // to execute. If the node can execute in its current state return
-        // the spec of its output data table(s) (if you can, otherwise an array
-        // with null elements), or throw an exception with a useful user message
 
 	}
 
@@ -248,7 +287,7 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
 
-        
+    	m_seed.saveSettingsTo(settings);
 
     }
 
@@ -259,7 +298,7 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
             
-
+    	m_seed.loadSettingsFrom(settings);
     }
 
     /**
@@ -269,6 +308,8 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
             
+    	m_seed.validateSettings(settings);
+    	
     }
     
     /**

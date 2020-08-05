@@ -23,10 +23,12 @@ import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
+import org.knime.core.node.defaultnodesettings.SettingsModelSeed;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 
+import cern.colt.Version;
 import cern.jet.random.engine.MersenneTwister;
 import cern.jet.random.engine.RandomEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.DataTableToBNMapper;
@@ -35,7 +37,8 @@ import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.AbstractInferenceEngine;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.BestInferenceEngine;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.InferencePerformanceUtils;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.SimpleConditionningInferenceEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortObject;
 
 
@@ -68,6 +71,11 @@ public class SampleFromBNNodeModel extends NodeModel {
                     SampleFromBNNodeModel.DEFAULT_COUNT,
                     Integer.MIN_VALUE, Integer.MAX_VALUE);
     
+    private final SettingsModelSeed m_seed = 
+    		new SettingsModelSeed(
+    				"seed", 
+    				(int)System.currentTimeMillis(), 
+    				false);
 
     private Map<NodeCategorical,DataTableToBNMapper> node2mapper = new HashMap<>();
     
@@ -102,6 +110,14 @@ public class SampleFromBNNodeModel extends NodeModel {
     	return specs.toArray(new DataColumnSpec[specs.size()]);
     }
     
+
+    @Override
+	protected PortObjectSpec[] configure(PortObjectSpec[] inSpecs) throws InvalidSettingsException {
+	
+        return new DataTableSpec[]{null};
+
+	}
+    
     @Override
 	protected PortObject[] execute(
 			PortObject[] inObjects, 
@@ -126,8 +142,16 @@ public class SampleFromBNNodeModel extends NodeModel {
     	// retrieve parameter
     	final int countToSample = m_count.getIntValue();
         
-        // TODO retrieve the seed
-    	final int seed = 5; // TODO
+        // retrieve the seed
+    	int seed; 
+    	if (m_seed.getIsActive()) {
+    		seed = (int)m_seed.getLongValue();
+    		if ((long)seed != m_seed.getLongValue())
+    			logger.info("the seed was converted from long "+m_seed.getLongValue()+" to int "+seed+"; this should have no impact for you");
+    	} else 
+    		seed = (int)System.currentTimeMillis();
+    	
+    	exec.setMessage("preparing the output table");
     	
     	// create output container
     	DataColumnSpec[] columnSpecs = createSpecsForBN(bn);
@@ -135,17 +159,41 @@ public class SampleFromBNNodeModel extends NodeModel {
     			
         BufferedDataContainer container = exec.createDataContainer(outputSpec);
 
-        logger.debug("random numbers will be generated using the MersenneTwister pseudo random number generator from the COLT library");
-        final RandomEngine random = new MersenneTwister(seed);
+        exec.setMessage("init of the random engine");
+    	logger.info("generating random numbers using the MersenneTwister pseudo-random number generator with seed "+seed+", as implemented in the COLT library "
+        		+Version.getMajorVersion()+"."+Version.getMinorVersion()+"."+Version.getMicroVersion());
         
+        final RandomEngine random = new MersenneTwister(seed);
+        exec.checkCanceled();
+
+        exec.setMessage("preparation of the inference engine");
+    	
         // get a Bayesian inference engine
-        final AbstractInferenceEngine engine = new BestInferenceEngine(
+        /*final AbstractInferenceEngine engine = new BestInferenceEngine(
+        		ilogger, 
+        		random,
+        		bn);*/
+        // simple conditioning is the best engine when it comes to sample without evidence
+        final AbstractInferenceEngine engine = new SimpleConditionningInferenceEngine(
         		ilogger, 
         		random,
         		bn);
         
+        exec.checkCanceled();
+        logger.info("using the Simple Conditioning Inference Engine");
+
+        exec.setProgress(0, "generating rows");
+    	final long timestart = System.currentTimeMillis();
+
+
+    	InferencePerformanceUtils.singleton.reset();
+    	
         for (int i=0; i<countToSample; i++) {
-        	
+            
+        	exec.setProgress(
+            		((double)i+1.0) / countToSample, 
+            		"Adding row " + i);
+            
         	// TODO draw several individuals a time ?
         	
         	// sample one individual
@@ -171,16 +219,19 @@ public class SampleFromBNNodeModel extends NodeModel {
         			);
         	
 
-        	if (i % 100 == 0) { // TODO granularity?
+        	//if (i % 10 == 0) { // TODO granularity?
 	            // check if the execution monitor was canceled
-	            exec.checkCanceled();
-	            exec.setProgress(
-	            		(double)i / countToSample, 
-	            		"Adding row " + i);
-        	}
+            exec.checkCanceled();
+
+        	//}
         }
-        
+    	final long timeend = System.currentTimeMillis();
+    	final long durationms = (timeend - timestart);
+    	logger.info("inference took "+(durationms/countToSample)+"ms per line");
+    	
         pushFlowVariableInt("sampled_count", countToSample);
+
+        exec.setProgress(100, "closing outputs");
 
         // once we are done, we close the container and return its table
         container.close();
@@ -194,37 +245,10 @@ public class SampleFromBNNodeModel extends NodeModel {
      */
     @Override
     protected void reset() {
-        // TODO Code executed on reset.
-        // Models build during execute are cleared here.
-        // Also data handled in load/saveInternals will be erased here.
+        
+    	// nothing to do
     }
 
-    @Override
-	protected PortObjectSpec[] configure(PortObjectSpec[] inSpecs) throws InvalidSettingsException {
-	
-        return new DataTableSpec[]{null};
-
-        /*
-    	try {
-        	CategoricalBayesianNetwork bn = null;
-
-    		BayesianNetworkPortObject capsule = (BayesianNetworkPortObject)inObjects[0];
-    		bn = capsule.getBN();
-    		
-    		return new DataTableSpec[]{ new DataTableSpec(createSpecsForBN(bn)) };
-    		
-    	} catch (RuntimeException e) {
-            return new DataTableSpec[]{null};
-    	}
-    	*/
-        
-    	 // TODO: check if user settings are available, fit to the incoming
-        // table structure, and the incoming types are feasible for the node
-        // to execute. If the node can execute in its current state return
-        // the spec of its output data table(s) (if you can, otherwise an array
-        // with null elements), or throw an exception with a useful user message
-
-	}
 
 
     /**
@@ -236,7 +260,7 @@ public class SampleFromBNNodeModel extends NodeModel {
         // TODO save user settings to the config object.
         
         m_count.saveSettingsTo(settings);
-
+        m_seed.saveSettingsTo(settings);
     }
 
     /**
@@ -246,12 +270,8 @@ public class SampleFromBNNodeModel extends NodeModel {
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
             
-        // TODO load (valid) settings from the config object.
-        // It can be safely assumed that the settings are valided by the 
-        // method below.
-        
         m_count.loadSettingsFrom(settings);
-
+        m_seed.loadSettingsFrom(settings);
     }
 
     /**
@@ -261,13 +281,9 @@ public class SampleFromBNNodeModel extends NodeModel {
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
             
-        // TODO check if the settings could be applied to our model
-        // e.g. if the count is in a certain range (which is ensured by the
-        // SettingsModel).
-        // Do not actually set any values of any member variables.
-
         m_count.validateSettings(settings);
-
+        m_seed.validateSettings(settings);
+        
     }
     
     /**
@@ -278,13 +294,8 @@ public class SampleFromBNNodeModel extends NodeModel {
             final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         
-        // TODO load internal data. 
-        // Everything handed to output ports is loaded automatically (data
-        // returned by the execute method, models loaded in loadModelContent,
-        // and user settings set through loadSettingsFrom - is all taken care 
-        // of). Load here only the other internals that need to be restored
-        // (e.g. data used by the views).
-
+    	// nothing to do
+    	
     }
     
     /**
@@ -294,13 +305,8 @@ public class SampleFromBNNodeModel extends NodeModel {
     protected void saveInternals(final File internDir,
             final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
-       
-        // TODO save internal models. 
-        // Everything written to output ports is saved automatically (data
-        // returned by the execute method, models saved in the saveModelContent,
-        // and user settings saved through saveSettingsTo - is all taken care 
-        // of). Save here only the other internals that need to be preserved
-        // (e.g. data used by the views).
+    	
+    	// nothing to do .
 
     }
 

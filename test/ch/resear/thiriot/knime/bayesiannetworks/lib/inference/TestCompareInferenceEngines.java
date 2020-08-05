@@ -28,10 +28,6 @@ import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.LogIntoJavaLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.AbstractInferenceEngine;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.EliminationInferenceEngine;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.InferencePerformanceUtils;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.RecursiveConditionningEngine;
 
 /**
  * Compares simulation engines with each other.
@@ -70,6 +66,9 @@ public class TestCompareInferenceEngines {
     
     private CategoricalBayesianNetwork bn;
     
+    private ILogger logger = LogIntoJavaLogger.getLogger(TestCompareInferenceEngines.class);
+
+    
 	@Before
 	public void setUp() throws Exception {
 	
@@ -79,7 +78,6 @@ public class TestCompareInferenceEngines {
 		System.out.println("loading file "+data.filename);
 		bn = CategoricalBayesianNetwork.loadFromXMLBIF(new File(data.filename));
 		
-		ILogger logger = LogIntoJavaLogger.getLogger(TestCompareInferenceEngines.class);
 		RandomEngine random = new MersenneTwister(new Date());
 		
 		engines = new LinkedList<>();
@@ -125,7 +123,7 @@ public class TestCompareInferenceEngines {
 					res.doubleValue(),
 					1e-8
 					);
-			InferencePerformanceUtils.singleton.display();
+			InferencePerformanceUtils.singleton.display(logger);
 
 		}
 		
@@ -174,7 +172,7 @@ public class TestCompareInferenceEngines {
 			System.err.flush();
 			
 			engineName2result.put(ie.getClass().getSimpleName(), round(res, rounding));
-			InferencePerformanceUtils.singleton.display();
+			InferencePerformanceUtils.singleton.display(logger);
 
 		}
 		
@@ -237,7 +235,7 @@ public class TestCompareInferenceEngines {
 			System.err.flush();
 			
 			engineName2result.put(ie.getClass().getSimpleName(), round(res, rounding));
-			InferencePerformanceUtils.singleton.display();
+			InferencePerformanceUtils.singleton.display(logger);
 
 		}
 		
@@ -295,7 +293,7 @@ public class TestCompareInferenceEngines {
 			System.err.flush();
 			
 			engineName2result.put(ie.getClass().getSimpleName(), round(res, rounding));
-			InferencePerformanceUtils.singleton.display();
+			InferencePerformanceUtils.singleton.display(logger);
 
 		}
 		
@@ -358,7 +356,7 @@ public class TestCompareInferenceEngines {
 			System.err.flush();
 			
 			engineName2result.put(ie.getClass().getSimpleName(), round(res, rounding));
-			InferencePerformanceUtils.singleton.display();
+			InferencePerformanceUtils.singleton.display(logger);
 
 		}
 		
