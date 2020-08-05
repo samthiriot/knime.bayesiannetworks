@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<knimeNode icon="../sample/bnsample-icon.png" 
+			type="Other" 
+			xmlns="http://knime.org/node/v2.8" 
+			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+			xsi:schemaLocation="http://knime.org/node/v2.10 http://knime.org/node/v2.10.xsd">
+			
+    <name>Augment Sample With BN</name>
+    
+    <shortDescription>
+        Adds additional columns based on the probabilities from a Bayesian network.
+    </shortDescription>
+    
+    <fullDescription>
+        <intro>Insert long description here...</intro>
+        
+       
+    </fullDescription>
+    
+    <ports>
+        <inPort index="0" name="sample">Original sample</inPort>
+        <inPort index="1" name="Bayesian network">Bayesian network</inPort>
+        
+        <outPort index="0" name="sample">Augmented sample</outPort>
+        
+    </ports>    
+    
+</knimeNode>
