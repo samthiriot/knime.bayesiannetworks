@@ -9,7 +9,7 @@ public class DataSprinkler extends AbstractTestData {
 	public DataSprinkler() {
 		super(
 				"sprinkler", 
-				"./src/test/resources/bayesiannetworks/sprinkler_rain_grasswet.xmlbif", 
+				"./resources/test/bayesiannetworks/sprinkler_rain_grasswet.xmlbif", 
 				3
 				);
 		

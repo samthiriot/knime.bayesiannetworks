@@ -6,12 +6,17 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
+import java.util.Date;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import cern.jet.random.engine.MersenneTwister;
+import cern.jet.random.engine.RandomEngine;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.LogIntoJavaLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.AbstractInferenceEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.EliminationInferenceEngine;
@@ -108,8 +113,18 @@ public class TestBayesianNetworkCompletionSampler {
 		
 		// then we can ask for a more complete population
 		BayesianNetworkCompletionSampler sampler ;
+		ILogger logger = LogIntoJavaLogger.getLogger(TestBayesianNetworkCompletionSampler.class);
+		RandomEngine random = new MersenneTwister(new Date());
+
 		try {
-			AbstractInferenceEngine engine = engineClass.getDeclaredConstructor(CategoricalBayesianNetwork.class).newInstance(bn);
+			AbstractInferenceEngine engine = engineClass.getConstructor(
+					ILogger.class, 
+					RandomEngine.class,
+					CategoricalBayesianNetwork.class
+					).newInstance(
+						logger,
+						random,
+						bn);
 			sampler = new BayesianNetworkCompletionSampler(bn, engine);
 		} catch (GSIllegalRangedData e) {
 			throw new RuntimeException(e);

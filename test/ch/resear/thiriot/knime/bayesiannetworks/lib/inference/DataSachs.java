@@ -9,7 +9,7 @@ public class DataSachs extends AbstractTestData {
 	public DataSachs() {
 		super(
 				"Sachs", 
-				"./src/test/resources/bayesiannetworks/sachs.xmlbif", 
+				"./resources/test/bayesiannetworks/sachs.xmlbif", 
 				3
 				);
 		

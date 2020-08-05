@@ -31,7 +31,7 @@ public class DataGerland1 extends AbstractTestData {
 	public DataGerland1() {
 		super(
 				"gerland1", 
-				"./src/test/resources/bayesiannetworks/gerland.xbif", 
+				"./resources/test/bayesiannetworks/gerland.xbif", 
 				4
 				);
 		

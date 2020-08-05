@@ -9,6 +9,8 @@ import java.util.Set;
 import org.apache.commons.collections4.map.LRUMap;
 import org.knime.core.node.NodeLogger;
 
+import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.LogIntoJavaLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.MoralGraph;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
@@ -27,7 +29,7 @@ public final class EliminationOrderDeepFirstSearch {
 
 	public static int CACHE_ALREADY_EXPLORED = 100000;
 	
-	private final NodeLogger logger;
+	private final ILogger logger;
 
 	private final MoralGraph g;
 	
@@ -38,7 +40,7 @@ public final class EliminationOrderDeepFirstSearch {
 	
 	private long totalExplored =  0;
 
-	private EliminationOrderDeepFirstSearch(NodeLogger logger, MoralGraph g) {
+	private EliminationOrderDeepFirstSearch(ILogger logger, MoralGraph g) {
 		this.logger = logger;		
 		this.g = g;
 	}
@@ -46,18 +48,18 @@ public final class EliminationOrderDeepFirstSearch {
 	public static List<NodeCategorical> computeEliminationOrder(
 			CategoricalBayesianNetwork bn) {
 		
-		return computeEliminationOrder(NodeLogger.getLogger(EliminationOrderDeepFirstSearch.class), bn);
+		return computeEliminationOrder(LogIntoJavaLogger.getLogger(EliminationOrderDeepFirstSearch.class), bn);
 	}
 	
 	public static List<NodeCategorical> computeEliminationOrder(
-			NodeLogger logger, 
+			ILogger logger, 
 			CategoricalBayesianNetwork bn) {
 		
 		return computeEliminationOrder(logger, bn, 5);
 	}
 	
 	public static List<NodeCategorical> computeEliminationOrder(
-			NodeLogger logger, 
+			ILogger logger, 
 			CategoricalBayesianNetwork bn, 
 			int maxTimeToSearchMinutes) {
 		
@@ -66,7 +68,7 @@ public final class EliminationOrderDeepFirstSearch {
 	}
 	
 	public static List<NodeCategorical> computeEliminationOrder(
-			NodeLogger logger, 
+			ILogger logger, 
 			CategoricalBayesianNetwork bn, 
 			Set<NodeCategorical> consideredNodes) {
 		
@@ -74,7 +76,7 @@ public final class EliminationOrderDeepFirstSearch {
 	}
 	
 	public static List<NodeCategorical> computeEliminationOrder(
-			NodeLogger logger, 
+			ILogger logger, 
 			CategoricalBayesianNetwork bn, 
 			Set<NodeCategorical> consideredNodes, 
 			int maxTimeToSearchMinutes) {

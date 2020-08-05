@@ -7,6 +7,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,6 +22,10 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
+import cern.jet.random.engine.MersenneTwister;
+import cern.jet.random.engine.RandomEngine;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.LogIntoJavaLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.AbstractInferenceEngine;
@@ -74,9 +79,18 @@ public class TestCompareInferenceEngines {
 		System.out.println("loading file "+data.filename);
 		bn = CategoricalBayesianNetwork.loadFromXMLBIF(new File(data.filename));
 		
+		ILogger logger = LogIntoJavaLogger.getLogger(TestCompareInferenceEngines.class);
+		RandomEngine random = new MersenneTwister(new Date());
+		
 		engines = new LinkedList<>();
 		for (Class<?> c: enginesToCompare) {
-			engines.add((AbstractInferenceEngine) c.getConstructor(CategoricalBayesianNetwork.class).newInstance(bn));
+			engines.add((AbstractInferenceEngine) c.getConstructor(
+					ILogger.class, 
+					RandomEngine.class,
+					CategoricalBayesianNetwork.class).newInstance(
+						logger,
+						random,
+						bn));
 		}
 		
 		System.out.println("creating instances of inference engines to compare: "+enginesToCompare.stream().map(c -> c.getSimpleName()).collect(Collectors.joining(",")));

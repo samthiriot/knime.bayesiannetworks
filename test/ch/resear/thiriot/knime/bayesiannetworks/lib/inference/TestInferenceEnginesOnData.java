@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -24,6 +25,9 @@ import org.junit.runners.Parameterized.Parameters;
 
 import cern.jet.random.Uniform;
 import cern.jet.random.engine.MersenneTwister;
+import cern.jet.random.engine.RandomEngine;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.LogIntoJavaLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
 
@@ -102,8 +106,19 @@ public class TestInferenceEnginesOnData {
 		System.out.println("========================================================================================================");
 
 		System.out.flush();
-		ie = (AbstractInferenceEngine) ieClass.getConstructor(CategoricalBayesianNetwork.class).newInstance(bn);
 		
+		ILogger logger = LogIntoJavaLogger.getLogger(TestCompareInferenceEngines.class);
+		RandomEngine random = new MersenneTwister(new Date());
+		
+		
+		ie = (AbstractInferenceEngine) ieClass.getConstructor(
+				ILogger.class, 
+				RandomEngine.class,
+				CategoricalBayesianNetwork.class
+				).newInstance(
+					logger,
+					random,
+					bn);
 	}
 
 	@After
@@ -395,7 +410,7 @@ public class TestInferenceEnginesOnData {
 					NodeCategorical n = varsOrdered.get(varsOrdered.size()-i-1);
 	
 					// take one value which does not has probability 0
-					String v = n.getDomain(random.nextIntFromTo(0, n.getDomainSize()));
+					String v = n.getDomain(random.nextIntFromTo(0, n.getDomainSize()-1));
 					
 					systematicEvidence.put(n, v);
 					ie.addEvidence(systematicEvidence);

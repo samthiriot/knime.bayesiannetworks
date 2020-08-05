@@ -9,7 +9,7 @@ public class DataAlarm extends AbstractTestData {
 	public DataAlarm() {
 		super(
 				"alarm", 
-				"./src/test/resources/bayesiannetworks/alarm.xmlbif", 
+				"./resources/test/bayesiannetworks/alarm.xmlbif", 
 				5
 				);
 		

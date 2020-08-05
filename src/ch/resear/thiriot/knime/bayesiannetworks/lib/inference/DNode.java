@@ -18,6 +18,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.NodeLogger;
 
 import cern.jet.random.AbstractContinousDistribution;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.LogIntoJavaLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.IteratorCategoricalVariables;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
@@ -44,7 +46,7 @@ public final class DNode {
 	public static int minCachedCount = 500;
 	public static int maxCachedCount = 100000;
 
-	private static NodeLogger logger = NodeLogger.getLogger(DNode.class);
+	private static ILogger logger = LogIntoJavaLogger.getLogger(DNode.class);
 	
 	
 	/**

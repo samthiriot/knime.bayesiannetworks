@@ -29,7 +29,7 @@ public class BayesianNetwork<N extends AbstractNode<N>> {
 
 	protected final ILogger logger;
 	
-	protected Set<N> nodes = new HashSet<>();
+	public Set<N> nodes = new HashSet<>();
 	
 	protected Map<String,N> name2node = new HashMap<>();
 	

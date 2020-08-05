@@ -12,9 +12,12 @@ import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.SingleGraph;
 import org.knime.core.node.NodeLogger;
 
+import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.LogIntoJavaLogger;
+
 public class MoralGraph extends SingleGraph {
 
-	private NodeLogger logger = NodeLogger.getLogger(MoralGraph.class);
+	private ILogger logger = LogIntoJavaLogger.getLogger(MoralGraph.class);
 
 	protected Map<NodeCategorical,String> variable2nodeId = new HashMap<>();
 	protected Map<String,NodeCategorical> nodeId2variable = new HashMap<>();

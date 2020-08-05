@@ -8,7 +8,7 @@ public class DataCancerSmall extends AbstractTestData {
 	public DataCancerSmall() {
 		super(
 				"cancer small", 
-				"./src/test/resources/bayesiannetworks/cancer.xmlbif", 
+				"./resources/test/bayesiannetworks/cancer.xmlbif", 
 				3
 				);
 		

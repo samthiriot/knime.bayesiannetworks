@@ -11,6 +11,7 @@ import cern.jet.random.AbstractContinousDistribution;
 import cern.jet.random.Uniform;
 import cern.jet.random.engine.MersenneTwister;
 import cern.jet.random.engine.RandomEngine;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.LogIntoJavaLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
 
@@ -38,7 +39,7 @@ public class TestSimpleConditionningInference {
 		RandomEngine random = new MersenneTwister(new Date());
 		
 		SimpleConditionningInferenceEngine ie = new SimpleConditionningInferenceEngine(
-				NodeLogger.getLogger(TestSimpleConditionningInference.class),
+				LogIntoJavaLogger.getLogger(TestSimpleConditionningInference.class),
 				random,
 				bn);
 		

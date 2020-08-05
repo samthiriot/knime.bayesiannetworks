@@ -31,7 +31,7 @@ public class TestDTree {
 
 	protected CategoricalBayesianNetwork loadSprinklerNetwork() {
 
-		File f = new File("./src/test/resources/bayesiannetworks/sprinkler_rain_grasswet.xmlbif");
+		File f = new File("./resources/test/bayesiannetworks/sprinkler_rain_grasswet.xmlbif");
 		
 		return CategoricalBayesianNetwork.loadFromXMLBIF(f);
 		
@@ -40,7 +40,7 @@ public class TestDTree {
 
 	protected CategoricalBayesianNetwork loadGerlandNetwork() {
 
-		File f = new File("./src/test/resources/bayesiannetworks/gerland.xbif");
+		File f = new File("./resources/test/bayesiannetworks/gerland.xbif");
 		
 		return CategoricalBayesianNetwork.loadFromXMLBIF(f);
 		

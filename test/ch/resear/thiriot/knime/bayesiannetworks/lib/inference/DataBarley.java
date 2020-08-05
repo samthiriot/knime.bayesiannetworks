@@ -9,7 +9,7 @@ public class DataBarley extends AbstractTestData {
 	public DataBarley() {
 		super(
 				"Barley", 
-				"./src/test/resources/bayesiannetworks/barley.xmlbif", 
+				"./resources/test/bayesiannetworks/barley.xmlbif", 
 				3
 				);
 		
