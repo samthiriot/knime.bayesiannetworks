@@ -6,6 +6,7 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+	<classpathentry exported="true" kind="lib" path="lib/jaxen-1.2.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/bcmail-jdk14-138.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/bcprov-jdk14-138.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/colt-1.2.0.jar"/>

@@ -24,6 +24,7 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Node;
 
 import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.LogIntoJavaLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.Factor;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.InferencePerformanceUtils;
 
@@ -33,6 +34,11 @@ public class CategoricalBayesianNetwork extends BayesianNetwork<NodeCategorical>
 	
 	public CategoricalBayesianNetwork(ILogger logger, String name) {
 		super(logger, name);
+
+	}
+	
+	public CategoricalBayesianNetwork(String name) {
+		super(LogIntoJavaLogger.getLogger(CategoricalBayesianNetwork.class), name);
 
 	}
 	
@@ -205,6 +211,11 @@ public class CategoricalBayesianNetwork extends BayesianNetwork<NodeCategorical>
 			throw new IllegalArgumentException("unable to read file "+f, e);
 		}
 		
+	}
+	
+	public static CategoricalBayesianNetwork loadFromXMLBIF(File f) {
+		
+		return loadFromXMLBIF(LogIntoJavaLogger.getLogger(CategoricalBayesianNetwork.class), f);
 	}
 	
 	public static CategoricalBayesianNetwork loadFromXMLBIF(ILogger logger, String s) {

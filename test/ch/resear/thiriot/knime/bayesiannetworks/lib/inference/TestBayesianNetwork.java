@@ -15,11 +15,15 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.LogIntoJavaLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
 
 public class TestBayesianNetwork {
 
+	private final ILogger logger = LogIntoJavaLogger.getLogger(TestBayesianNetwork.class);
+	
 	@Rule
 	public TemporaryFolder tempFolder = new TemporaryFolder();
 	   

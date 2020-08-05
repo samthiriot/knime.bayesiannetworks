@@ -12,14 +12,15 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.knime.core.node.NodeLogger;
 
+import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.LogIntoJavaLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.Factor;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.InferencePerformanceUtils;
 
 public final class NodeCategorical extends FiniteNode<NodeCategorical> {
 
-	private static NodeLogger logger = NodeLogger.getLogger(NodeCategorical.class);
+	private final ILogger logger;
 	
 	protected NodeCategorical[] parentsArray = new NodeCategorical[0];
 	protected Map<NodeCategorical,Integer> parent2index = new HashMap<>(50);
@@ -38,6 +39,11 @@ public final class NodeCategorical extends FiniteNode<NodeCategorical> {
 	public NodeCategorical(CategoricalBayesianNetwork net, String name) {
 		
 		super(net, name);
+		
+		if (net == null || net.logger == null)
+			logger = LogIntoJavaLogger.getLogger(NodeCategorical.class);
+		else 
+			logger = net.logger;
 		
 		this.cNetwork = net;
 	}
