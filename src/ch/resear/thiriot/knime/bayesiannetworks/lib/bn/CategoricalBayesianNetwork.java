@@ -22,8 +22,8 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Node;
-import org.knime.core.node.NodeLogger;
 
+import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.Factor;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.InferencePerformanceUtils;
 
@@ -31,17 +31,11 @@ public class CategoricalBayesianNetwork extends BayesianNetwork<NodeCategorical>
 
 	protected Map<NodeCategorical,Factor> node2factor = new HashMap<>();
 	
-	public CategoricalBayesianNetwork(NodeLogger logger, String name) {
+	public CategoricalBayesianNetwork(ILogger logger, String name) {
 		super(logger, name);
 
 	}
 	
-	public CategoricalBayesianNetwork(String name) {
-		super(
-				NodeLogger.getLogger(CategoricalBayesianNetwork.class), 
-				name);
-
-	}
 	
 	public CategoricalBayesianNetwork clone() {
 		return CategoricalBayesianNetwork.readFromXMLBIF(this.logger, this.getAsXMLString());
@@ -103,7 +97,7 @@ public class CategoricalBayesianNetwork extends BayesianNetwork<NodeCategorical>
 	 * @param xmlStr
 	 * @return
 	 */
-	public static CategoricalBayesianNetwork readFromXMLBIF(NodeLogger logger, String xmlStr) {
+	public static CategoricalBayesianNetwork readFromXMLBIF(ILogger logger, String xmlStr) {
 		
         Document document;
 		try {
@@ -200,7 +194,7 @@ public class CategoricalBayesianNetwork extends BayesianNetwork<NodeCategorical>
 	 * @param f
 	 * @return
 	 */
-	public static CategoricalBayesianNetwork loadFromXMLBIF(NodeLogger logger, File f) {
+	public static CategoricalBayesianNetwork loadFromXMLBIF(ILogger logger, File f) {
 		
 		if (logger.isDebugEnabled())
 			logger.debug("reading a CategoricalBayesianNetwork from XML BIF file " + f);
@@ -213,12 +207,7 @@ public class CategoricalBayesianNetwork extends BayesianNetwork<NodeCategorical>
 		
 	}
 	
-	public static CategoricalBayesianNetwork loadFromXMLBIF(File f) {
-		
-		return loadFromXMLBIF(NodeLogger.getLogger(CategoricalBayesianNetwork.class), f);
-	}
-	
-	public static CategoricalBayesianNetwork loadFromXMLBIF(NodeLogger logger, String s) {
+	public static CategoricalBayesianNetwork loadFromXMLBIF(ILogger logger, String s) {
 
 			return readFromXMLBIF(logger, s);
 		

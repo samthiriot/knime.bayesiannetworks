@@ -12,10 +12,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.map.LRUMap;
-import org.knime.core.node.NodeLogger;
 
-import cern.jet.random.AbstractContinousDistribution;
 import cern.jet.random.engine.RandomEngine;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
 
@@ -32,7 +31,7 @@ public class EliminationInferenceEngine extends AbstractInferenceEngine {
 	private LRUMap<Set<NodeCategorical>,Factor> cacheNode2factorForEvidence = null;
 	
 	public EliminationInferenceEngine(
-			NodeLogger logger, 
+			ILogger logger, 
 			RandomEngine random,
 			CategoricalBayesianNetwork bn) {
 		super(logger, random, bn);

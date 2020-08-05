@@ -6,10 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.knime.core.node.NodeLogger;
-
-import cern.jet.random.AbstractContinousDistribution;
 import cern.jet.random.engine.RandomEngine;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
 
@@ -29,7 +27,7 @@ public class RecursiveConditionningEngine extends AbstractInferenceEngine {
 
 	
 	public RecursiveConditionningEngine(
-			NodeLogger logger, 
+			ILogger logger, 
 			RandomEngine random,
 			CategoricalBayesianNetwork bn) {
 		super(logger, random, bn);

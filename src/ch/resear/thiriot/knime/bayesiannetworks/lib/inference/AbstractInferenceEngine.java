@@ -6,17 +6,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.knime.core.node.NodeLogger;
-
 import cern.jet.random.AbstractContinousDistribution;
 import cern.jet.random.Uniform;
 import cern.jet.random.engine.RandomEngine;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
 
 public abstract class AbstractInferenceEngine {
 
-	protected final NodeLogger logger;
+	protected final ILogger logger;
 	protected final AbstractContinousDistribution rng;
 	protected final CategoricalBayesianNetwork bn;
 	
@@ -31,7 +30,7 @@ public abstract class AbstractInferenceEngine {
 	protected boolean dirty = true;
 	
 	
-	public AbstractInferenceEngine(NodeLogger logger, 
+	public AbstractInferenceEngine(ILogger logger, 
 			RandomEngine random,
 			CategoricalBayesianNetwork bn) {
 		this.bn = bn;

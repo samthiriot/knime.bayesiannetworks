@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.collections4.map.LRUMap;
-import org.apache.log4j.Logger;
 import org.knime.core.node.NodeLogger;
 
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;

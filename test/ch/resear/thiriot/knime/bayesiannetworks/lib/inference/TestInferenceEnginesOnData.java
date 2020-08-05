@@ -24,7 +24,6 @@ import org.junit.runners.Parameterized.Parameters;
 
 import cern.jet.random.Uniform;
 import cern.jet.random.engine.MersenneTwister;
-import ch.resear.thiriot.knime.bayesiannetworks.SimpleConditionningInferenceEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
 

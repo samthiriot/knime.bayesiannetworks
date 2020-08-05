@@ -1,4 +1,4 @@
-package ch.resear.thiriot.knime.bayesiannetworks;
+package ch.resear.thiriot.knime.bayesiannetworks.lib.inference;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -8,15 +8,12 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.collections4.map.LRUMap;
-import org.knime.core.node.NodeLogger;
 
-import cern.jet.random.AbstractContinousDistribution;
 import cern.jet.random.engine.RandomEngine;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.IteratorCategoricalVariables;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.AbstractInferenceEngine;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.InferencePerformanceUtils;
 
 /**
  * Simple conditioning stands as the simplest exact inference engine possible to propagate evidence 
@@ -56,7 +53,7 @@ public class SimpleConditionningInferenceEngine extends AbstractInferenceEngine 
 	private LRUMap<Map<NodeCategorical,String>,Double> evidence2proba = null;
 	
 	public SimpleConditionningInferenceEngine(
-			NodeLogger logger, 
+			ILogger logger, 
 			RandomEngine random,
 			CategoricalBayesianNetwork bn) {
 		super(logger, random, bn);

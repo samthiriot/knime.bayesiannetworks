@@ -2,10 +2,8 @@ package ch.resear.thiriot.knime.bayesiannetworks.lib.inference;
 
 import java.util.Map;
 
-import org.knime.core.node.NodeLogger;
-
 import cern.jet.random.engine.RandomEngine;
-import ch.resear.thiriot.knime.bayesiannetworks.SimpleConditionningInferenceEngine;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
 
@@ -25,7 +23,7 @@ public final class BestInferenceEngine extends AbstractInferenceEngine {
 	private final RandomEngine random;
 	
 	public BestInferenceEngine(
-			NodeLogger logger, 
+			ILogger logger, 
 			RandomEngine random,
 			CategoricalBayesianNetwork bn) {
 		super(logger, random, bn);

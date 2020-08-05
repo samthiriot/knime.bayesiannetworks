@@ -10,8 +10,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import org.knime.core.node.NodeLogger;
-
+import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.MoralGraph;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
@@ -82,12 +81,12 @@ public final class EliminationOrderBestFirstSearch {
 
 	protected Map<Set<NodeCategorical>,NodeExplored> closedList = new HashMap<>();
 	
-	private final NodeLogger logger;
+	private final ILogger logger;
 	private final MoralGraph g;
 
 	private long totalExplored =  0;
 	
-	private EliminationOrderBestFirstSearch(NodeLogger logger, MoralGraph g) {
+	private EliminationOrderBestFirstSearch(ILogger logger, MoralGraph g) {
 		this.logger = logger;
 		this.g = g;
 	}
@@ -209,7 +208,7 @@ public final class EliminationOrderBestFirstSearch {
 
 	
 	public static List<NodeCategorical> computeEliminationOrder(
-			NodeLogger logger, 
+			ILogger logger, 
 			CategoricalBayesianNetwork bn) {
 		
 		EliminationOrderBestFirstSearch dfs = new EliminationOrderBestFirstSearch(logger, new MoralGraph(bn));
@@ -218,7 +217,7 @@ public final class EliminationOrderBestFirstSearch {
 
 	
 	public static List<NodeCategorical> computeEliminationOrder(
-			NodeLogger logger, 
+			ILogger logger, 
 			CategoricalBayesianNetwork bn, Set<NodeCategorical> consideredNodes) {
 		
 		EliminationOrderBestFirstSearch dfs = new EliminationOrderBestFirstSearch(logger, new MoralGraph(bn, consideredNodes));

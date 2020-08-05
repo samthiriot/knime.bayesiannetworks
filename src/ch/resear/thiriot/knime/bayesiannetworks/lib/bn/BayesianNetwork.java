@@ -14,7 +14,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.knime.core.node.NodeLogger;
+
+import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 
 /**
  * represent a Bayesian Network (Directed Acyclic Graph) made of NodeCategorical. 
@@ -26,7 +27,7 @@ import org.knime.core.node.NodeLogger;
  */
 public class BayesianNetwork<N extends AbstractNode<N>> {
 
-	protected final NodeLogger logger;
+	protected final ILogger logger;
 	
 	protected Set<N> nodes = new HashSet<>();
 	
@@ -40,7 +41,7 @@ public class BayesianNetwork<N extends AbstractNode<N>> {
 	 * Creates a network.
 	 * @param name
 	 */
-	public BayesianNetwork(NodeLogger logger, String name) {
+	public BayesianNetwork(ILogger logger, String name) {
 		this.name = name;
 		this.logger = logger;
 	}
