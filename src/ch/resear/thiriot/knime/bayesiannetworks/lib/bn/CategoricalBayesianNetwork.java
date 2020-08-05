@@ -223,6 +223,12 @@ public class CategoricalBayesianNetwork extends BayesianNetwork<NodeCategorical>
 			return readFromXMLBIF(logger, s);
 		
 	}
+
+	public static CategoricalBayesianNetwork loadFromXMLBIF(String s) {
+
+			return readFromXMLBIF(LogIntoJavaLogger.getLogger(CategoricalBayesianNetwork.class), s);
+		
+	}
 	
 	public Set<NodeCategorical> getAllAncestors(NodeCategorical n) {
 

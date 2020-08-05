@@ -20,6 +20,7 @@ import org.knime.core.data.def.StringCell;
 import org.knime.core.data.def.StringCell.StringCellFactory;
 import org.knime.core.node.NodeLogger;
 
+import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
 
@@ -30,7 +31,7 @@ public class DataTableToBNMapper {
 	public final NodeCategorical node;
 	private DataColumnSpec spec = null;
 	
-	protected final NodeLogger logger;
+	protected final ILogger logger;
 	
 	private DataType knimeType;
 	
@@ -40,7 +41,7 @@ public class DataTableToBNMapper {
 	
     public static Map<NodeCategorical,DataTableToBNMapper> createMapper(
     		CategoricalBayesianNetwork bn, 
-    		NodeLogger logger) {
+    		ILogger logger) {
     	return bn.getNodes().stream().collect(
     			Collectors.toMap( 
     					n -> n, 
@@ -53,7 +54,7 @@ public class DataTableToBNMapper {
     
     
 	public DataTableToBNMapper(NodeCategorical node, 
-								NodeLogger logger) {
+			ILogger logger) {
 		
 		this.node = node;
 		this.logger = logger;

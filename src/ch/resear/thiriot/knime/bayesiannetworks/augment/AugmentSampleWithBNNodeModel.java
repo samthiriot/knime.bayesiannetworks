@@ -30,7 +30,11 @@ import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 
+import cern.jet.random.engine.MersenneTwister;
+import cern.jet.random.engine.RandomEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.DataTableToBNMapper;
+import ch.resear.thiriot.knime.bayesiannetworks.LogIntoNodeLogger;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.AbstractInferenceEngine;
@@ -49,7 +53,8 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
     // the logger instance
     private static final NodeLogger logger = NodeLogger
             .getLogger(AugmentSampleWithBNNodeModel.class);
-    
+    private static final ILogger ilogger = new LogIntoNodeLogger(logger);
+
     /**
      * Constructor for the node model.
      */
@@ -89,7 +94,7 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
     	// no parameter to retrieve
     	
     	// define what we will add as columns
-    	Map<NodeCategorical,DataTableToBNMapper> node2mapper = DataTableToBNMapper.createMapper(bn, logger);
+    	Map<NodeCategorical,DataTableToBNMapper> node2mapper = DataTableToBNMapper.createMapper(bn, ilogger);
     	
     	List<NodeCategorical> nodesForEvidence = new LinkedList<>();
     	List<NodeCategorical> nodesToAdd = new LinkedList<>();
@@ -124,7 +129,14 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
         BufferedDataContainer container = exec.createDataContainer(outputSpec);
 
     	// initialize a Bayesian inference engine
-        final AbstractInferenceEngine engine = new BestInferenceEngine(logger, rng, bn);
+        
+        // TODO retrieve the seed
+    	final int seed = 5; // TODO
+    	
+        logger.debug("random numbers will be generated using the MersenneTwister pseudo random number generator from the COLT library");
+        final RandomEngine random = new MersenneTwister(seed);
+        
+        final AbstractInferenceEngine engine = new BestInferenceEngine(ilogger, random, bn);
         
     	// iterate each row of data, and learn the count to later fill in the BN
     	Iterator<DataRow> itRows = sample.iterator();

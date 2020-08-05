@@ -4,45 +4,45 @@
                             <extension
                                   point="org.knime.workbench.repository.categories">
                                <category
-                                     description="Bayesian networks for GOSP"
-                                     icon="src/ch/res_ear/samthiriot/knime/gosp/bayesiannet/bn-icon.png"
+                                     description="Bayesian networks"
+                                     icon="src/ch/resear/thiriot/knime/bayesiannetworks/bn-icon.png"
                                      level-id="bayesiannet"
                                      locked="false"
                                      name="Bayesian networks"
-                                     path="/gosp">
+                                     path="/community">
                                </category>
                                <category
                                      description="Read Bayesian networks"
-                                     icon="src/ch/res_ear/samthiriot/knime/gosp/bayesiannet/reader/bnreader-icon.png"
+                                     icon="src/ch/resear/thiriot/knime/bayesiannetworks/reader/bnreader-icon.png"
                                      level-id="read"
                                      locked="false"
                                      name="Read"
-                                     path="/gosp/bayesiannet">
+                                     path="/community/bayesiannet">
                                </category>
                                <category
                                      after="read"
-                                     icon="src/ch/res_ear/samthiriot/knime/gosp/bayesiannet/sample/bnsample-icon.png"
+                                     icon="src/ch/resear/thiriot/knime/bayesiannetworks/sample/bnsample-icon.png"
                                      level-id="sample"
                                      locked="false"
                                      name="Sample"
-                                     path="/gosp/bayesiannet">
+                                     path="/community/bayesiannet">
                                </category>
                                <category
                                      after="sample"
-                                     icon="src/ch/res_ear/samthiriot/knime/gosp/bayesiannet/bn-icon.png"
+                                     icon="src/ch/resear/thiriot/knime/bayesiannetworks/bn-icon.png"
                                      level-id="learn"
                                      locked="false"
                                      name="Learn"
-                                     path="/gosp/bayesiannet">
+                                     path="/community/bayesiannet">
                                </category>
                                <category
                                      after="learn"
                                      description="Write Bayesian networks"
-                                     icon="src/ch/res_ear/samthiriot/knime/gosp/bayesiannet/writer/bnwriter-icon.png"
+                                     icon="src/ch/resear/thiriot/knime/bayesiannetworks/writer/bnwriter-icon.png"
                                      level-id="write"
                                      locked="false"
                                      name="Write"
-                                     path="/gosp/bayesiannet">
+                                     path="/community/bayesiannet">
                                </category>
                             </extension>
    <extension point="org.knime.core.PortType">
@@ -50,26 +50,22 @@
             color="#219829"
             hidden="false"
             name="ch.res_ear.samthiriot.porttype.bayesiannet"
-            objectClass="ch.res_ear.samthiriot.knime.gosp.bayesiannet.port.BayesianNetworkPortObject"
-            objectSerializer="ch.res_ear.samthiriot.knime.gosp.bayesiannet.port.BayesianNetworkPortObject$Serializer"
-            specClass="ch.res_ear.samthiriot.knime.gosp.bayesiannet.port.BayesianNetworkPortSpec"
-            specSerializer="ch.res_ear.samthiriot.knime.gosp.bayesiannet.port.BayesianNetworkPortSpec$Serializer">
+            objectClass="ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortObject"
+            objectSerializer="ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortObject$Serializer"
+            specClass="ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortSpec"
+            specSerializer="ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortSpec$Serializer">
       </portType>
    </extension>
 
    
    <extension
          point="org.knime.workbench.repository.nodes">
-      <node category-path="/gosp/bayesiannet/read" factory-class="ch.res_ear.samthiriot.knime.gosp.bayesiannet.reader.XMLBIFBNReaderNodeFactory" id="ch.res_ear.samthiriot.gosp.bayesiannet.reader.XMLBIFBNReaderNodeFactory"/>
-   <node category-path="/gosp/bayesiannet/sample" factory-class="ch.res_ear.samthiriot.knime.gosp.bayesiannet.sample.SampleFromBNNodeFactory" id="ch.res_ear.samthiriot.gosp.bayesiannet.sample.SampleFromBNNodeFactory"/>
-<node category-path="/gosp/bayesiannet/learn" factory-class="ch.res_ear.samthiriot.knime.gosp.bayesiannet.learn.LearnBNFromSampleNodeFactory" id="ch.res_ear.samthiriot.gosp.bayesiannet.learn.LearnBNFromSampleNodeFactory"/>
-<node category-path="/gosp/bayesiannet/write" factory-class="ch.res_ear.samthiriot.knime.gosp.bayesiannet.writer.BNXMLNBIFWriterNodeFactory" id="ch.res_ear.samthiriot.gosp.bayesiannet.writer.BNXMLNBIFWriterNodeFactory"/>
-<node category-path="/gosp/bayesiannet/sample" factory-class="ch.res_ear.samthiriot.knime.gosp.bayesiannet.augment.AugmentSampleWithBNNodeFactory" id="ch.res_ear.samthiriot.gosp.bayesiannet.augment.AugmentSampleWithBNNodeFactory"/>
+      <node category-path="/community/bayesiannet/read" factory-class="ch.resear.thiriot.knime.bayesiannetworks.reader.XMLBIFBNReaderNodeFactory" id="ch.res_ear.samthiriot.gosp.bayesiannet.reader.XMLBIFBNReaderNodeFactory"/>
+   <node category-path="/community/bayesiannet/sample" factory-class="ch.resear.thiriot.knime.bayesiannetworks.sample.SampleFromBNNodeFactory" id="ch.res_ear.samthiriot.gosp.bayesiannet.sample.SampleFromBNNodeFactory"/>
+<node category-path="/community/bayesiannet/learn" factory-class="ch.resear.thiriot.knime.bayesiannetworks.learn.LearnBNFromSampleNodeFactory" id="ch.res_ear.samthiriot.gosp.bayesiannet.learn.LearnBNFromSampleNodeFactory"/>
+<node category-path="/community/bayesiannet/write" factory-class="ch.resear.thiriot.knime.bayesiannetworks.writer.BNXMLNBIFWriterNodeFactory" id="ch.res_ear.samthiriot.gosp.bayesiannet.writer.BNXMLNBIFWriterNodeFactory"/>
+<node category-path="/community/bayesiannet/sample" factory-class="ch.resear.thiriot.knime.bayesiannetworks.augment.AugmentSampleWithBNNodeFactory" id="ch.res_ear.samthiriot.gosp.bayesiannet.augment.AugmentSampleWithBNNodeFactory"/>
 
-      <node
-            category-path="/"
-            factory-class="ch.resear.thiriot.knime.bayesiannetworks.read.ReadBNFromXMLBIFNodeFactory"
-            id="ch.resear.thiriot.ReadBNFromXMLBIFNodeFactory"/>
    </extension>
    
 </plugin>

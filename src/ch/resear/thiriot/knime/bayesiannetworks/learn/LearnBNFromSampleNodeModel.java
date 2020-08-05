@@ -26,6 +26,8 @@ import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 
 import ch.resear.thiriot.knime.bayesiannetworks.DataTableToBNMapper;
+import ch.resear.thiriot.knime.bayesiannetworks.LogIntoNodeLogger;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.IteratorCategoricalVariables;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
@@ -44,7 +46,8 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     // the logger instance
     private static final NodeLogger logger = NodeLogger
             .getLogger(LearnBNFromSampleNodeModel.class);
-        
+    private static final ILogger ilogger = new LogIntoNodeLogger(logger);
+
 
     /**
      * Constructor for the node model.
@@ -178,7 +181,7 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     	Map<NodeCategorical,DataTableToBNMapper> node2mapper = 
     			DataTableToBNMapper.createMapper(
 	        		learnt, 
-	        		logger);
+	        		ilogger);
 	        
     	// associate each node with its index
     	Map<NodeCategorical,Integer> node2column = 

@@ -27,7 +27,11 @@ import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 
+import cern.jet.random.engine.MersenneTwister;
+import cern.jet.random.engine.RandomEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.DataTableToBNMapper;
+import ch.resear.thiriot.knime.bayesiannetworks.LogIntoNodeLogger;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.AbstractInferenceEngine;
@@ -46,6 +50,7 @@ public class SampleFromBNNodeModel extends NodeModel {
     // the logger instance
     private static final NodeLogger logger = NodeLogger
             .getLogger(SampleFromBNNodeModel.class);
+    private static final ILogger ilogger = new LogIntoNodeLogger(logger);
         
     /** the settings key which is used to retrieve and 
         store the settings (from the dialog or from a settings file)    
@@ -80,13 +85,11 @@ public class SampleFromBNNodeModel extends NodeModel {
     }
     
     
-
-    
     protected DataColumnSpec[] createSpecsForBN(CategoricalBayesianNetwork bn) {
     	
     	node2mapper.clear();
     	
-    	node2mapper.putAll(DataTableToBNMapper.createMapper(bn, logger));
+    	node2mapper.putAll(DataTableToBNMapper.createMapper(bn, ilogger));
     	
     	
     	List<DataColumnSpec> specs = new LinkedList<DataColumnSpec>();
@@ -123,15 +126,23 @@ public class SampleFromBNNodeModel extends NodeModel {
     	// retrieve parameter
     	final int countToSample = m_count.getIntValue();
         
-        
+        // TODO retrieve the seed
+    	final int seed = 5; // TODO
+    	
     	// create output container
     	DataColumnSpec[] columnSpecs = createSpecsForBN(bn);
         DataTableSpec outputSpec = new DataTableSpec(columnSpecs);
     			
         BufferedDataContainer container = exec.createDataContainer(outputSpec);
 
+        logger.debug("random numbers will be generated using the MersenneTwister pseudo random number generator from the COLT library");
+        final RandomEngine random = new MersenneTwister(seed);
+        
         // get a Bayesian inference engine
-        final AbstractInferenceEngine engine = new BestInferenceEngine(bn);
+        final AbstractInferenceEngine engine = new BestInferenceEngine(
+        		ilogger, 
+        		random,
+        		bn);
         
         for (int i=0; i<countToSample; i++) {
         	
