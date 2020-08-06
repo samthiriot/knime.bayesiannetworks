@@ -10,7 +10,6 @@ import org.graphstream.graph.EdgeRejectedException;
 import org.graphstream.graph.IdAlreadyInUseException;
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.SingleGraph;
-import org.knime.core.node.NodeLogger;
 
 import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.LogIntoJavaLogger;

@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.map.LRUMap;
 import org.apache.commons.lang3.StringUtils;
-import org.knime.core.node.NodeLogger;
 
 import cern.jet.random.AbstractContinousDistribution;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;

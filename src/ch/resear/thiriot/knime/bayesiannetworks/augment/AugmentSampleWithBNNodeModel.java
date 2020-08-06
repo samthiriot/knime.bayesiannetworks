@@ -11,12 +11,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.junit.runner.manipulation.NoTestsRemainException;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
-import org.knime.core.data.RowKey;
 import org.knime.core.data.def.DefaultRow;
 import org.knime.core.node.BufferedDataContainer;
 import org.knime.core.node.BufferedDataTable;
@@ -41,11 +39,8 @@ import ch.resear.thiriot.knime.bayesiannetworks.LogIntoNodeLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.AbstractInferenceEngine;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.BestInferenceEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.EliminationInferenceEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.InferencePerformanceUtils;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.RecursiveConditionningEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortObject;
 
 

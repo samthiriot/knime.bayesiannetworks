@@ -16,8 +16,15 @@
         Read a Bayesian network stored in XML BIF format. 
         This format is used by platforms such as WEKA, and graphical editors such as JavaBayes, Genie and Netica or Samiam. 
         This format is documented <a href="http://www.cs.cmu.edu/afs/cs/user/fgcozman/www/Research/InterchangeFormat/">on the website of the Carnegie Mellon University</a>.  
-        .</intro>
         
+        <p>
+        You might create your Bayesian networks with any graphical editor such as:
+        <a href="http://reasoning.cs.ucla.edu/samiam/index.php?s=">the good old SamIam</a>
+		</p>
+		<p>
+        Go there to <a href="https://github.com/samthiriot/knime-shapefiles-as-WKT/issues">report bugs or ask for features</a>
+        </p>
+        .</intro>
         
         <option name="file">the file to read</option>
     </fullDescription>

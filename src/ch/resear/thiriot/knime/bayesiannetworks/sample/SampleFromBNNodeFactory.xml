@@ -19,16 +19,14 @@
         this node generates a data table  
         with columns corresponding the variables of the BN, and the content of cells being the categories of the variables.
         
-        <p>
         Computing time depends on the size of the Bayesian network: size of the Conditional Probability Tables, 
         count of them. 
         The behavior is not linear thanks to caching of computations: the more lines your compute, the quicker it goes.
-        </p>
         
-        <p>
         The random numbers are generated using the <a href="https://dst.lbl.gov/ACSSoftware/colt/">Colt library</a> 
         (see <a href="https://en.wikipedia.org/wiki/Colt_(libraries)">the wikipedia page</a>) published by CERN. 
-        </p>
+        
+        Go there to <a href="https://github.com/samthiriot/knime-shapefiles-as-WKT/issues">report bugs or ask for features</a>
         </intro>
         
         

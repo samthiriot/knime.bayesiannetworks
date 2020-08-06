@@ -27,7 +27,8 @@
         <p>
         The random numbers are generated using the <a href="https://dst.lbl.gov/ACSSoftware/colt/">Colt library</a> 
         (see <a href="https://en.wikipedia.org/wiki/Colt_(libraries)">the wikipedia page</a>) published by CERN. 
-        </p>
+		</p>
+
         </intro>
         
         <option name="Seed">Enables you to freeze the Random Number Generator used to sample. 

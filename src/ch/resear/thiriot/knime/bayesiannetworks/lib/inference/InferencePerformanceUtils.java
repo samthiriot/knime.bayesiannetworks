@@ -1,9 +1,6 @@
 package ch.resear.thiriot.knime.bayesiannetworks.lib.inference;
 
-import org.knime.core.node.NodeLogger;
-
 import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.LogIntoJavaLogger;
 
 /**
  * Util to monitor the cost of inference computations. Tracks count of multiplication and addition of big decimals
