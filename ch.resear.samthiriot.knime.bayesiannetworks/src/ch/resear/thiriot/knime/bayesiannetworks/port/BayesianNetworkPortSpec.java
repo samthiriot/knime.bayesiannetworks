@@ -16,24 +16,20 @@ public class BayesianNetworkPortSpec extends AbstractSimplePortObjectSpec {
     public static final class Serializer extends AbstractSimplePortObjectSpecSerializer<BayesianNetworkPortSpec> {}
 
 	public BayesianNetworkPortSpec() {
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
 	public JComponent[] getViews() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	protected void save(ModelContentWO model) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	protected void load(ModelContentRO model) throws InvalidSettingsException {
-		// TODO Auto-generated method stub
 		
 	}
 

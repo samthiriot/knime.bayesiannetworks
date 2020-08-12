@@ -93,6 +93,16 @@ public class XMLBIFBNReaderNodeModel extends NodeModel {
     
     @Override
 	protected BayesianNetworkPortSpec[] configure(PortObjectSpec[] inSpecs) throws InvalidSettingsException {
+    	
+    	if (m_file.getStringValue().isEmpty())
+    		throw new InvalidSettingsException("please provide a Bayesian network to read");
+    	
+    	File fileData = new File(m_file.getStringValue());
+    	if (!fileData.isFile() || !fileData.exists())
+    		throw new InvalidSettingsException("the filename does not refer to a file");
+    	if (!fileData.canRead())
+    		throw new InvalidSettingsException("cannot read file "+m_file);
+    	
     	return new BayesianNetworkPortSpec[] { new BayesianNetworkPortSpec() };
 	}
 

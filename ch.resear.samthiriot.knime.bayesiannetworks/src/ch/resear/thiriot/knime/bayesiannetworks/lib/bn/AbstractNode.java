@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public abstract class AbstractNode<N extends AbstractNode<N>> {
 
@@ -71,6 +72,21 @@ public abstract class AbstractNode<N extends AbstractNode<N>> {
 
 	public Collection<N> getAllChildren() {
 		return network.getAllChildren((N) this);
+	}
+	
+	@Override
+	public String toString() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("p(").append(name);
+		
+		if (!parents.isEmpty()) {
+			sb.append('|');
+			sb.append(parents.stream().map(n -> n.name).collect(Collectors.joining(",")));
+		}
+		
+		sb.append(")");
+		
+		return sb.toString();
 	}
 
 }
