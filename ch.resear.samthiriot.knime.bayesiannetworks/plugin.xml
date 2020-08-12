@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.0"?>
 <plugin>
+   <extension
+         point="org.knime.product.splashExtension">
+      <splashExtension
+            icon="resources/icons/logo48.png"
+            icon24="resources/icons/logo24.png"
+            icon32="resources/icons/logo32.png"
+            id="ch.resear.samthiriot.knime.bayesiannetworks.splashExtension1"
+            tooltip="Bayesian Networks nodes">
+      </splashExtension>
+   </extension>
                             <extension
                                   point="org.knime.workbench.repository.categories">
                                <category

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="48"
+   height="48"
+   viewBox="0 0 48 48.000001"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)"
+   sodipodi:docname="logo.svg"
+   inkscape:export-filename="/data/sam/workspaces/workspace-dev-knime/knime.bayesiannetworks/ch.resear.samthiriot.knime.bayesiannetworks/resources/icons/logo16.png"
+   inkscape:export-xdpi="32"
+   inkscape:export-ydpi="32">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="3.959798"
+     inkscape:cx="-71.986511"
+     inkscape:cy="36.060131"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     units="px"
+     inkscape:window-width="1920"
+     inkscape:window-height="1024"
+     inkscape:window-x="0"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-1004.3622)">
+    <rect
+       style="opacity:1;fill:#c8c4b7;fill-opacity:1"
+       id="rect4136"
+       width="48.234787"
+       height="48.487217"
+       x="-6.0481881e-08"
+       y="1004.0011" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.2665596px;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.85554665px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="0.71738315"
+       y="718.81219"
+       id="text4153"
+       transform="scale(0.69769328,1.4332946)"><tspan
+         sodipodi:role="line"
+         x="0.71738315"
+         y="718.81219"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:15.91469383px;line-height:56.00000024%;font-family:'Gillius ADF';-inkscape-font-specification:'Gillius ADF, Bold';text-align:start;letter-spacing:0.70999992px;writing-mode:lr-tb;text-anchor:start;fill:#d45500;fill-opacity:1;stroke-width:0.85554665px"
+         id="tspan37">Bayesian</tspan><tspan
+         sodipodi:role="line"
+         x="0.71738315"
+         y="727.72443"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:15.91469383px;line-height:56.00000024%;font-family:'Gillius ADF';-inkscape-font-specification:'Gillius ADF, Bold';text-align:start;letter-spacing:-0.76999998px;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke-width:0.85554665px"
+         id="tspan41">networ<tspan
+   style="line-height:56.00000024%;letter-spacing:-0.76999998px;fill:#d45500"
+   id="tspan43">k</tspan>s</tspan></text>
+  </g>
+</svg>
