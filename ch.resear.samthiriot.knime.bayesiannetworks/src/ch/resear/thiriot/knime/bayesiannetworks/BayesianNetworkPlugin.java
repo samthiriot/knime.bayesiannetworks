@@ -4,8 +4,6 @@
  */
 package ch.resear.thiriot.knime.bayesiannetworks;
 
-import javax.annotation.Resources;
-
 import org.eclipse.core.runtime.Plugin;
 import org.osgi.framework.BundleContext;
 
