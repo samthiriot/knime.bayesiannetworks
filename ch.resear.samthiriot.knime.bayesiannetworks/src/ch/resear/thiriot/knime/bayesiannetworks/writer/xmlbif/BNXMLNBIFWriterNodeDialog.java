@@ -1,4 +1,4 @@
-package ch.resear.thiriot.knime.bayesiannetworks.writer;
+package ch.resear.thiriot.knime.bayesiannetworks.writer.xmlbif;
 
 import javax.swing.JFileChooser;
 

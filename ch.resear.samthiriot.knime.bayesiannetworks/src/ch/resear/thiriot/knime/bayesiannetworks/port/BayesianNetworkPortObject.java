@@ -3,12 +3,6 @@
  */
 package ch.resear.thiriot.knime.bayesiannetworks.port;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import javax.swing.JComponent;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -24,7 +18,6 @@ import org.knime.core.node.port.PortType;
 import org.knime.core.node.port.PortTypeRegistry;
 
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.IteratorCategoricalVariables;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
 
 /**
@@ -83,6 +76,9 @@ public class BayesianNetworkPortObject extends AbstractSimplePortObject {
 				for (NodeCategorical n: bn.enumerateNodes()) {
 					sb.append(n).append("\n");
 
+					n.toStringComplete(sb);
+					
+					/*
 					for (String v: n.getDomain()) {
 						//sb.append("p(").append(n.name).append("=").append(v).append("|*) = ").append(n.getConditionalProbability(v)).append("\n");
 						
@@ -99,19 +95,8 @@ public class BayesianNetworkPortObject extends AbstractSimplePortObject {
 						}
 							
 							
-					}
+					}*/
 					
-					/*
-					Collection<NodeCategorical> nodes = new ArrayList<NodeCategorical>(n.getParents().size()+1);
-					nodes.add(n);
-					nodes.addAll(n.getParents());
-					
-					IteratorCategoricalVariables it = bn.iterateDomains(nodes);
-					while (it.hasNext()) {
-						Map<NodeCategorical,String> n2s = it.next();
-					}
-					
-					for (n.get)*/
 					
 					sb.append("\n\n");
 				
@@ -120,7 +105,7 @@ public class BayesianNetworkPortObject extends AbstractSimplePortObject {
 			}
 			
 			JTextArea c = new JTextArea(sb.toString());
-			c.setLineWrap(true);
+			c.setLineWrap(false);
 			
 			spProbabilities = new JScrollPane(c);
 			spProbabilities.setName("Conditional Probability Tables");

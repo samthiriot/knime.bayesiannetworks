@@ -173,6 +173,39 @@ public class BayesianNetwork<N extends AbstractNode<N>> {
 		return sb.toString();
 	}
 	
+	public String getAsBIFString() {
+		
+		StringBuffer sb = new StringBuffer();
+		
+		sb.append("network ").append(name).append(" {\n");
+		sb.append("}\n");
+		
+		for (N n: enumerateNodes())
+			n.toBIF(sb);
+			
+		
+		return sb.toString();
+
+	}
+	
+	/**
+	 * @url http://www.cs.washington.edu/dm/vfml/appendixes/bif.htm
+	 * @param f
+	 * @throws FileNotFoundException
+	 */
+	public void saveAsBIF(File f) throws FileNotFoundException {
+
+		PrintStream ps = new PrintStream(f);
+		ps.print(getAsBIFString());
+		ps.close();
+	}
+	
+	public void saveAsBIF(String filename) throws FileNotFoundException {
+		
+		saveAsBIF(new File(filename));
+		
+	}
+	
 	/**
 	 * @url http://www.cs.cmu.edu/~fgcozman/Research/InterchangeFormat/
 	 * @param f

@@ -34,7 +34,8 @@ Require-Bundle: org.eclipse.core.runtime,
  org.apache.commons.collections4;bundle-version="4.1.0",
  org.apache.commons.collections;bundle-version="3.2.0",
  org.apache.commons.lang3;bundle-version="3.9.0",
- org.apache.log4j;bundle-version="1.2.0"
+ org.apache.log4j;bundle-version="1.2.0",
+ org.eclipse.core.resources;bundle-version="3.13.700"
 Bundle-ActivationPolicy: lazy
 Export-Package: ch.resear.thiriot.knime.bayesiannetworks;
   uses:="ch.resear.thiriot.knime.bayesiannetworks.lib,
@@ -44,6 +45,8 @@ Export-Package: ch.resear.thiriot.knime.bayesiannetworks;
    org.knime.core.data,
    org.knime.core.node",
  ch.resear.thiriot.knime.bayesiannetworks.augment,
+ ch.resear.thiriot.knime.bayesiannetworks.create.addnode,
+ ch.resear.thiriot.knime.bayesiannetworks.create.empty,
  ch.resear.thiriot.knime.bayesiannetworks.learn,
  ch.resear.thiriot.knime.bayesiannetworks.lib,
  ch.resear.thiriot.knime.bayesiannetworks.lib.bn,
@@ -51,6 +54,7 @@ Export-Package: ch.resear.thiriot.knime.bayesiannetworks;
  ch.resear.thiriot.knime.bayesiannetworks.port,
  ch.resear.thiriot.knime.bayesiannetworks.reader,
  ch.resear.thiriot.knime.bayesiannetworks.sample,
- ch.resear.thiriot.knime.bayesiannetworks.writer
+ ch.resear.thiriot.knime.bayesiannetworks.writer.bif,
+ ch.resear.thiriot.knime.bayesiannetworks.writer.xmlbif
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 

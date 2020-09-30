@@ -64,6 +64,7 @@ public abstract class AbstractNode<N extends AbstractNode<N>> {
 	
 	public abstract void toXMLBIF(StringBuffer sb);
 	
+	public abstract void toBIF(StringBuffer sb);
 
 	@SuppressWarnings("unchecked")
 	public Collection<N> getAllAncestors() {

@@ -4,6 +4,8 @@
  */
 package ch.resear.thiriot.knime.bayesiannetworks;
 
+import javax.annotation.Resources;
+
 import org.eclipse.core.runtime.Plugin;
 import org.osgi.framework.BundleContext;
 
@@ -38,6 +40,21 @@ public class BayesianNetworkPlugin extends Plugin {
     public void start(final BundleContext context) throws Exception {
         super.start(context);
 
+        /*
+        IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(description.getName());
+
+        
+        IOverwriteQuery overwriteQuery = new IOverwriteQuery() {
+	            public String queryOverwrite(String file) { return ALL; }
+	    };
+	
+	    String baseDir = // location of files to import
+	    		org.eclipse.ui.wizards.
+	    ImportOperation importOperation = new ImportOperation(project.getFullPath(),
+	            new File(baseDir), FileSystemStructureProvider.INSTANCE, overwriteQuery);
+	    importOperation.setCreateContainerStructure(false);
+	    importOperation.run(new NullProgressMonitor());
+    	*/
     }
 
     /**

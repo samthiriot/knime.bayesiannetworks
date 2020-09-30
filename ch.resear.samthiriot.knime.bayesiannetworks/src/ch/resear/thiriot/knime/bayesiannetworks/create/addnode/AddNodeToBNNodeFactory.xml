@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<knimeNode icon="../sample/bnsample-icon.png" 
+			type="Other" 
+			xmlns="http://knime.org/node/v2.8" 
+			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+			xsi:schemaLocation="http://knime.org/node/v2.10 http://knime.org/node/v2.10.xsd">
+			
+    <name>Add Node to BN</name>
+    
+    <shortDescription>
+		Adds a node to the Bayesian Network using the input table 
+    </shortDescription>
+    
+    <fullDescription>
+        <intro>
+        Adds a node to the Bayesian Network using the input table.
+        <br/>
+        In this first version, the input table should only contain the relevant columns.
+        It will create a node p(V=vi|P1=p1,P2=p2...)=pi with: 
+        V the name of the first column; 
+        vi the values of the first column; 
+        Pj the names of the other columns;
+        pjt the contents of the next columns
+        the last column should contain the double value with the probability.
+        </intro>
+        
+    </fullDescription>
+    
+    <ports>
+        <inPort index="0" name="sample">Original sample</inPort>
+        <inPort index="1" name="Bayesian network">Bayesian network</inPort>
+        
+        <outPort index="0" name="sample">Augmented sample</outPort>
+        
+    </ports>    
+    
+</knimeNode>

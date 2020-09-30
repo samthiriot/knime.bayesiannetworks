@@ -1,4 +1,4 @@
-package ch.resear.thiriot.knime.bayesiannetworks.writer;
+package ch.resear.thiriot.knime.bayesiannetworks.writer.bif;
 
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeFactory;
@@ -10,15 +10,15 @@ import org.knime.core.node.NodeView;
  *
  * @author Samuel Thiriot
  */
-public class BNXMLNBIFWriterNodeFactory 
-        extends NodeFactory<BNXMLNBIFWriterNodeModel> {
+public class BIFWriterNodeFactory 
+        extends NodeFactory<BIFWriterNodeModel> {
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public BNXMLNBIFWriterNodeModel createNodeModel() {
-        return new BNXMLNBIFWriterNodeModel();
+    public BIFWriterNodeModel createNodeModel() {
+        return new BIFWriterNodeModel();
     }
 
     /**
@@ -33,8 +33,8 @@ public class BNXMLNBIFWriterNodeFactory
      * {@inheritDoc}
      */
     @Override
-    public NodeView<BNXMLNBIFWriterNodeModel> createNodeView(final int viewIndex,
-            final BNXMLNBIFWriterNodeModel nodeModel) {
+    public NodeView<BIFWriterNodeModel> createNodeView(final int viewIndex,
+            final BIFWriterNodeModel nodeModel) {
         return null;
     }
 
@@ -51,7 +51,7 @@ public class BNXMLNBIFWriterNodeFactory
      */
     @Override
     public NodeDialogPane createNodeDialogPane() {
-        return new BNXMLNBIFWriterNodeDialog();
+        return new BIFWriterNodeDialog();
     }
 
 }

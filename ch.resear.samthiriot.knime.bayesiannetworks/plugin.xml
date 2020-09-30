@@ -31,6 +31,15 @@
                                </category>
                                <category
                                      after="read"
+                                     description="Create Bayesian networks"
+                                     icon="src/ch/resear/thiriot/knime/bayesiannetworks/bn-icon.png"
+                                     level-id="create"
+                                     locked="false"
+                                     name="Create"
+                                     path="/community/bayesiannet">
+                               </category>
+                               <category
+                                     after="create"
                                      icon="src/ch/resear/thiriot/knime/bayesiannetworks/sample/bnsample-icon.png"
                                      level-id="sample"
                                      locked="false"
@@ -48,7 +57,7 @@
                                <category
                                      after="learn"
                                      description="Write Bayesian networks"
-                                     icon="src/ch/resear/thiriot/knime/bayesiannetworks/writer/bnwriter-icon.png"
+                                     icon="src/ch/resear/thiriot/knime/bayesiannetworks/writer/xmlbif/bnwriter-icon.png"
                                      level-id="write"
                                      locked="false"
                                      name="Write"
@@ -70,11 +79,23 @@
    
    <extension
          point="org.knime.workbench.repository.nodes">
-      <node category-path="/community/bayesiannet/read" factory-class="ch.resear.thiriot.knime.bayesiannetworks.reader.XMLBIFBNReaderNodeFactory" id="ch.res_ear.samthiriot.gosp.bayesiannet.reader.XMLBIFBNReaderNodeFactory"/>
-   <node category-path="/community/bayesiannet/sample" factory-class="ch.resear.thiriot.knime.bayesiannetworks.sample.SampleFromBNNodeFactory" id="ch.res_ear.samthiriot.gosp.bayesiannet.sample.SampleFromBNNodeFactory"/>
-<node category-path="/community/bayesiannet/learn" factory-class="ch.resear.thiriot.knime.bayesiannetworks.learn.LearnBNFromSampleNodeFactory" id="ch.res_ear.samthiriot.gosp.bayesiannet.learn.LearnBNFromSampleNodeFactory"/>
-<node category-path="/community/bayesiannet/write" factory-class="ch.resear.thiriot.knime.bayesiannetworks.writer.BNXMLNBIFWriterNodeFactory" id="ch.res_ear.samthiriot.gosp.bayesiannet.writer.BNXMLNBIFWriterNodeFactory"/>
-<node category-path="/community/bayesiannet/sample" factory-class="ch.resear.thiriot.knime.bayesiannetworks.augment.AugmentSampleWithBNNodeFactory" id="ch.res_ear.samthiriot.gosp.bayesiannet.augment.AugmentSampleWithBNNodeFactory"/>
+      <node category-path="/community/bayesiannet/read" factory-class="ch.resear.thiriot.knime.bayesiannetworks.reader.XMLBIFBNReaderNodeFactory"/>
+   <node category-path="/community/bayesiannet/sample" factory-class="ch.resear.thiriot.knime.bayesiannetworks.sample.SampleFromBNNodeFactory"/>
+<node category-path="/community/bayesiannet/learn" factory-class="ch.resear.thiriot.knime.bayesiannetworks.learn.LearnBNFromSampleNodeFactory"/>
+<node category-path="/community/bayesiannet/write" factory-class="ch.resear.thiriot.knime.bayesiannetworks.writer.xmlbif.BNXMLNBIFWriterNodeFactory"/>
+<node category-path="/community/bayesiannet/sample" factory-class="ch.resear.thiriot.knime.bayesiannetworks.augment.AugmentSampleWithBNNodeFactory"/>
+<node
+      category-path="/community/bayesiannet/create"
+      factory-class="ch.resear.thiriot.knime.bayesiannetworks.create.empty.CreateEmptyNodeFactory">
+</node>
+<node
+      category-path="/community/bayesiannet/create"
+      factory-class="ch.resear.thiriot.knime.bayesiannetworks.create.addnode.AddNodeToBNNodeFactory">
+</node>
+<node
+      category-path="/community/bayesiannet/write"
+      factory-class="ch.resear.thiriot.knime.bayesiannetworks.writer.bif.BIFWriterNodeFactory">
+</node>
 
    </extension>
    

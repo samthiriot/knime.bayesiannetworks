@@ -60,6 +60,10 @@ public abstract class FiniteNode<N extends AbstractNode<N>> extends AbstractNode
 		// adapt cpt size
 		adaptContentSize();
 	}
+	
+	public final void addDomain(List<String> values) {
+		this.addDomain(values.toArray(new String[values.size()]));
+	}
 
 	protected abstract void adaptContentSize();
 	

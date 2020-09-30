@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringEscapeUtils;
@@ -302,31 +303,40 @@ public final class NodeCategorical extends FiniteNode<NodeCategorical> {
 	}
 	
 	public void normalize() {
-		// TODOpublic void normalize() {
-		// TODO 
-		/*
-		double sum = getSum();
-		for ()
-		double r = 0;
-		for (double m: content) {
-			r += m;
+		
+		//System.out.println("before:\t"+Arrays.toString(content));
+		
+		IteratorCategoricalVariables it = cNetwork.iterateDomains(getParents());
+		while (it.hasNext()) {
+			Map<NodeCategorical,String> n2s = it.next();
+			
+			double total = .0;
+			for (String n: domain) {
+				total += getProbability(n, n2s);
+			}
+			if (total == 0) {
+				// no data at all ! we have to assume equiprobability
+				System.out.println(
+						"equiprobability for p("+name+"|"+
+						n2s.entrySet().stream().map(k2v -> k2v.getKey().getName()+"="+k2v.getValue()).collect(Collectors.joining(","))+
+						")");
+				double eq = 1.0 / domain.size();
+				for (String n: domain) {
+					setProbabilities(eq, n, n2s);
+				}
+			} else if (Math.abs(total - 1.0) > 10e-8) {
+				System.out.println(
+						"normalizing p("+name+"|"+
+						n2s.entrySet().stream().map(k2v -> k2v.getKey().getName()+"="+k2v.getValue()).collect(Collectors.joining(","))+
+						")");
+				for (String n: domain) {
+					double p = getProbability(n, n2s);
+					setProbabilities(p/total, n, n2s);
+				}
+			}
 		}
-		return r;
-		*/
 		
-		final double sum = getSum();
-		final double target = getParentsDimensionality();
-		double ratio = sum/target;
-		
-		System.out.println("ratio " + ratio);
-		System.out.println("before:\t"+Arrays.toString(content));
-		
-		for (int i=0; i<content.length; i++) {
-			content[i] = content[i]*ratio;
-		}
-		
-		System.out.println("after:\t"+Arrays.toString(content));
-		
+		//System.out.println("after:\t"+Arrays.toString(content));
 		
 		if (!isValid()) {
 			throw new RuntimeException("the node is not valid after normalization: "+
@@ -670,9 +680,9 @@ public final class NodeCategorical extends FiniteNode<NodeCategorical> {
 		
 		// define the distribution
 		sb.append("<DEFINITION>\n");
-		sb.append("\t<FOR>").append(getName()).append("</FOR>\n");
+		sb.append("\t<FOR>").append(StringEscapeUtils.escapeXml10(getName())).append("</FOR>\n");
 		for (NodeCategorical n: parentsArray)
-			sb.append("\t<GIVEN>").append(n.getName()).append("</GIVEN>\n");
+			sb.append("\t<GIVEN>").append(StringEscapeUtils.escapeXml10(n.getName())).append("</GIVEN>\n");
 
 		sb.append("\t<TABLE>");
 		for (Double p: content) {
@@ -682,6 +692,56 @@ public final class NodeCategorical extends FiniteNode<NodeCategorical> {
 
 		sb.append("</DEFINITION>\n");
 		
+		
+	}
+	
+	private static Pattern patternReplaceNonNumeric = Pattern.compile("[^a-zA-Z0-9]+");
+	private static Pattern patternFirstCharNumeric = Pattern.compile("^[a-zA-Z].*");
+
+	public static String convertDomainValueToNormalizedIdentifier(String domainValue) {
+		
+		String res = patternReplaceNonNumeric.matcher(domainValue).replaceAll("_");
+
+		if (!patternFirstCharNumeric.matcher(res).matches())
+			res = "z"+res;
+		
+		return res;
+			
+	}
+	
+	public void toBIF(StringBuffer sb) {
+		
+		// define the variable
+		sb.append("variable ").append(convertDomainValueToNormalizedIdentifier(name)).append(" {\n");
+		sb.append("   type discrete [ ").append(domain.size()).append(" ] { ").append(domain.stream().map(n -> convertDomainValueToNormalizedIdentifier(n)).collect(Collectors.joining(", "))).append(" };\n");
+		sb.append("}\n");
+		
+		// define the distribution
+		sb.append("probability ( ").append(convertDomainValueToNormalizedIdentifier(name));
+		if (!parents.isEmpty()) {
+			sb.append(" | ").append(parents.stream().map(n -> convertDomainValueToNormalizedIdentifier(n.getName())).collect(Collectors.joining(", ")));
+		}
+		sb.append(" ) {\n");
+		
+		if (parents.isEmpty()) {
+			// if no parent: just a table in a line
+			sb.append("   table ").append(Arrays.stream(content).mapToObj(d -> Double.toString(d)).collect(Collectors.joining(", "))).append(";\n");
+		} else {
+			// if parents: a tabular representation such as 
+			// (ParentValue1, ParentValue2, ...) myVal1, myVal2...
+			// (ParentValue1, ParentValue2, ...) myVal1, myVal2...
+			IteratorCategoricalVariables it = cNetwork.iterateDomains(getParents());
+			while (it.hasNext()) {
+				Map<NodeCategorical,String> n2s = it.next();
+				
+				sb.append(" (").append(n2s.values().stream().map(v -> convertDomainValueToNormalizedIdentifier(v)).collect(Collectors.joining(", "))).append(") ");
+				sb.append(domain.stream().map(n -> Double.toString(getProbability(n, n2s))).collect(Collectors.joining(", ")));
+				sb.append(";\n");
+				
+			}	
+		}
+		
+		sb.append("}\n");
 		
 	}
 	
@@ -738,6 +798,39 @@ public final class NodeCategorical extends FiniteNode<NodeCategorical> {
 		}
 		sb.append(")");
 		return sb.toString();
+	}
+	
+	/**
+	 * Writes the entire representation of the CPT 
+	 * @return
+	 */
+	public String toStringComplete() {
+		
+		StringBuffer sb = new StringBuffer();
+		
+		toStringComplete(sb);
+		
+		return sb.toString();
+	}
+	
+	public void toStringComplete(StringBuffer sb) {
+				
+		for (String v: getDomain()) {
+			
+			IteratorCategoricalVariables it = cNetwork.iterateDomains(getParents());
+			while (it.hasNext()) {
+				Map<NodeCategorical,String> n2s = it.next();
+				sb.append("p( ").append(getName()).append("=").append(v);
+				if (hasParents()) {
+					sb.append(" | ");
+					sb.append(n2s.entrySet().stream().map(e -> e.getKey().name+"="+e.getValue()).collect(Collectors.joining(", ")));
+				}
+				sb.append(" ) = ").append(getProbability(v, n2s)).append("\n");
+			}
+				
+				
+		}
+	
 	}
 
 	
