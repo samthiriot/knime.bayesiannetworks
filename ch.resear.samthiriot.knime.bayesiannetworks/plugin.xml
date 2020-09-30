@@ -96,6 +96,10 @@
       category-path="/community/bayesiannet/write"
       factory-class="ch.resear.thiriot.knime.bayesiannetworks.writer.bif.BIFWriterNodeFactory">
 </node>
+<node
+      category-path="/community/bayesiannet/write"
+      factory-class="ch.resear.thiriot.knime.bayesiannetworks.writer.net.NetWriterNodeFactory">
+</node>
 
    </extension>
    

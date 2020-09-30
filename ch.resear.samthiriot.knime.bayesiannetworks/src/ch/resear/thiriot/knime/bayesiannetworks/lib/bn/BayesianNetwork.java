@@ -188,6 +188,32 @@ public class BayesianNetwork<N extends AbstractNode<N>> {
 
 	}
 	
+	public String getAsNetString() {
+		
+		StringBuffer sb = new StringBuffer();
+		
+		sb.append("net\n{\n}\n");
+		
+		for (N n: enumerateNodes())
+			n.toNet(sb);
+		
+		return sb.toString();
+
+	}
+	
+	public void saveAsNet(File f) throws FileNotFoundException {
+
+		PrintStream ps = new PrintStream(f);
+		ps.print(getAsNetString());
+		ps.close();
+	}
+	
+	public void saveAsNet(String filename) throws FileNotFoundException {
+		
+		saveAsNet(new File(filename));
+		
+	}
+	
 	/**
 	 * @url http://www.cs.washington.edu/dm/vfml/appendixes/bif.htm
 	 * @param f

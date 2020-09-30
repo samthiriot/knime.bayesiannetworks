@@ -55,6 +55,7 @@ Export-Package: ch.resear.thiriot.knime.bayesiannetworks;
  ch.resear.thiriot.knime.bayesiannetworks.reader,
  ch.resear.thiriot.knime.bayesiannetworks.sample,
  ch.resear.thiriot.knime.bayesiannetworks.writer.bif,
+ ch.resear.thiriot.knime.bayesiannetworks.writer.net,
  ch.resear.thiriot.knime.bayesiannetworks.writer.xmlbif
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 

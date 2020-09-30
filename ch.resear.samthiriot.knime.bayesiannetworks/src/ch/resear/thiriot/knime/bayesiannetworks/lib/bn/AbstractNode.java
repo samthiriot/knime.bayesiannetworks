@@ -63,8 +63,8 @@ public abstract class AbstractNode<N extends AbstractNode<N>> {
 	public abstract List<String> collectInvalidityReasons();
 	
 	public abstract void toXMLBIF(StringBuffer sb);
-	
 	public abstract void toBIF(StringBuffer sb);
+	public abstract void toNet(StringBuffer sb);
 
 	@SuppressWarnings("unchecked")
 	public Collection<N> getAllAncestors() {

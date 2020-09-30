@@ -1,5 +1,6 @@
 package ch.resear.thiriot.knime.bayesiannetworks.lib.bn;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -709,6 +710,8 @@ public final class NodeCategorical extends FiniteNode<NodeCategorical> {
 			
 	}
 	
+
+	
 	public void toBIF(StringBuffer sb) {
 		
 		// define the variable
@@ -740,6 +743,60 @@ public final class NodeCategorical extends FiniteNode<NodeCategorical> {
 				
 			}	
 		}
+		
+		sb.append("}\n");
+		
+	}
+
+	public void toNet(StringBuffer sb) {
+		
+		// define the variable
+		sb.append("node ").append(convertDomainValueToNormalizedIdentifier(name)).append("\n{\n");
+		sb.append("  states = ( ").append(domain.stream().map(n -> '"'+convertDomainValueToNormalizedIdentifier(n)+'"').collect(Collectors.joining(" "))).append(" );\n");
+		sb.append("}\n");
+		
+		// define the distribution
+		List<NodeCategorical> parentsL = new ArrayList<>(getNetwork().enumerateNodes());
+		parentsL.retainAll(parents);
+		sb.append("potential ( ").append(convertDomainValueToNormalizedIdentifier(name));
+		if (!parents.isEmpty()) {
+			sb.append(" | ").append(parentsL.stream().map(n -> convertDomainValueToNormalizedIdentifier(n.getName())).collect(Collectors.joining(" ")));
+		}
+		sb.append(" )\n{\n");
+		
+		sb.append("  data = ( ");
+		if (parents.isEmpty()) {
+			// if no parent: just a table in a line
+			sb.append(Arrays.stream(content).mapToObj(d -> Double.toString(d)).collect(Collectors.joining(" ")));
+		} else {
+			// if parents: 
+			List<NodeCategorical> parentsLR = new ArrayList<>(parentsL);
+			Collections.reverse(parentsLR);
+			IteratorCategoricalVariables it = cNetwork.iterateDomains(parentsLR);
+			Map<NodeCategorical,String> previous = null;
+			// open all parenthesis
+			for (NodeCategorical p: parentsL)
+				sb.append("(");
+			while (it.hasNext()) {
+				Map<NodeCategorical,String> n2s = it.next();
+
+				if (previous != null) {
+					for (NodeCategorical p: parentsL) 
+						if (!previous.get(p).equals(n2s.get(p)))
+							sb.append(")");
+					for (NodeCategorical p: parentsL) 
+						if (!previous.get(p).equals(n2s.get(p)))
+							sb.append("(");
+				} 
+				previous = n2s;
+
+				sb.append(domain.stream().map(n -> Double.toString(getProbability(n, n2s))).collect(Collectors.joining(" ")));
+			}	
+			// close all parenthesis
+			for (NodeCategorical p: parentsL)
+				sb.append(")");
+		}
+		sb.append(" );\n");
 		
 		sb.append("}\n");
 		
