@@ -25,6 +25,7 @@ import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
@@ -46,6 +47,8 @@ public class AddNodeToBNNodeModel extends NodeModel {
     private static final NodeLogger logger = NodeLogger
             .getLogger(AddNodeToBNNodeModel.class);
 
+    private final SettingsModelBoolean m_acceptMultiple = new SettingsModelBoolean("accept_multiple", false);
+    
     
     /**
      * Constructor for the node model.
@@ -63,6 +66,9 @@ public class AddNodeToBNNodeModel extends NodeModel {
 			PortObject[] inObjects, 
 			ExecutionContext exec) throws Exception {
 
+    	// decode parameter
+    	final boolean accept_multiple = m_acceptMultiple.getBooleanValue();
+    	
     	// decode input Bayesian network
     	CategoricalBayesianNetwork bn = null;
     	try {
@@ -165,7 +171,16 @@ public class AddNodeToBNNodeModel extends NodeModel {
             		));
             
             logger.warn("p("+specColVariable.getName()+"="+value+"|"+parent2Value+")="+probability);
-            newNode.setProbabilities(probability, value, parent2Value);
+            double pastProba = newNode.getProbability(value, parent2Value);
+            if (!accept_multiple && (pastProba > 0))
+            	throw new InvalidSettingsException("We already found a value for combination p("+
+            								specColVariable.getName()+"="+value+"|"+
+            								parent2Value.entrySet()
+            											.stream()
+            											.map(k2v -> k2v.getKey().getName()+"="+k2v.getValue())
+            											.collect(Collectors.joining(","))+
+            								")");
+            newNode.setProbabilities(pastProba+probability, value, parent2Value);
             
     		rowIdx++;
     	}
@@ -211,7 +226,7 @@ public class AddNodeToBNNodeModel extends NodeModel {
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
 
-
+    	m_acceptMultiple.saveSettingsTo(settings);
     }
 
     /**
@@ -221,6 +236,8 @@ public class AddNodeToBNNodeModel extends NodeModel {
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
             
+
+    	m_acceptMultiple.loadSettingsFrom(settings);
     }
 
     /**
@@ -230,7 +247,8 @@ public class AddNodeToBNNodeModel extends NodeModel {
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
             
-    	
+
+    	m_acceptMultiple.validateSettings(settings);
     }
     
     /**

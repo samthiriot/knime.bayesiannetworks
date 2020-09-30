@@ -1,8 +1,8 @@
 package ch.resear.thiriot.knime.bayesiannetworks.create.addnode;
 
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
-import org.knime.core.node.defaultnodesettings.DialogComponentSeed;
-import org.knime.core.node.defaultnodesettings.SettingsModelSeed;
+import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 
 /**
  * <code>NodeDialog</code> for the "SampleFromBNNode" Node.
@@ -25,12 +25,9 @@ public class AddNodeToBNNodeDialog extends DefaultNodeSettingsPane {
     protected AddNodeToBNNodeDialog() {
         super();
         
-        addDialogComponent(new DialogComponentSeed(
-        	    new SettingsModelSeed(
-        				"seed", 
-        				System.currentTimeMillis(), 
-        				false),
-        	    "seed"
+        addDialogComponent(new DialogComponentBoolean(
+        		new SettingsModelBoolean("accept_multiple", false),
+        	    "accept multiple occurences"
         	    ));
     }
 }
