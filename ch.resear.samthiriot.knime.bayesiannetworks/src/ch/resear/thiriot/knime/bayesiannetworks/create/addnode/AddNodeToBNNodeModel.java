@@ -132,7 +132,7 @@ public class AddNodeToBNNodeModel extends NodeModel {
     	final int idxColProba = sampleRead.getDataTableSpec().getNumColumns()-1;
     	DataColumnSpec specColProba = sampleRead.getDataTableSpec().getColumnSpec(idxColProba);
     	List<DataColumnSpec> specColsDependant = IntStream.range(1, sampleRead.getDataTableSpec().getNumColumns()-1).mapToObj(i -> sample.getDataTableSpec().getColumnSpec(i)).collect(Collectors.toList());
-    	logger.warn(
+    	logger.info(
     			"will create a node p("+specColVariable.getName()+"|"+
     			specColsDependant.stream().map(s -> s.getName()).collect(Collectors.joining(","))+
     			")"
@@ -186,7 +186,7 @@ public class AddNodeToBNNodeModel extends NodeModel {
         
         // ... define the domain 
         List<String> domain = specColVariable.getDomain().getValues().stream().map(dc -> dc.toString()).collect(Collectors.toList());
-        logger.warn("domain of p("+specColVariable.getName()+":"+domain);
+        logger.info("domain of p("+specColVariable.getName()+") will be "+domain);
         newNode.addDomain(domain);
         
         exec.setProgress(0, "building the Conditional Probability Table");
@@ -213,7 +213,7 @@ public class AddNodeToBNNodeModel extends NodeModel {
             				k2v -> row.getCell(k2v.getValue()).toString()
             		));
             
-            logger.warn("p("+specColVariable.getName()+"="+value+"|"+parent2Value+")="+probability);
+            //logger.warn("p("+specColVariable.getName()+"="+value+"|"+parent2Value+")="+probability);
             double pastProba = newNode.getProbability(value, parent2Value);
             if (!accept_multiple && (pastProba > 0))
             	throw new InvalidSettingsException("We already found a value for combination p("+
@@ -228,13 +228,11 @@ public class AddNodeToBNNodeModel extends NodeModel {
     		rowIdx++;
     	}
     	
-    	System.out.println("before normalization:\n"+newNode.toStringComplete());
-
-    	// TODO are there missing values ????
+    	//System.out.println("before normalization:\n"+newNode.toStringComplete());
 
 
     	// try to normalize
-    	// TODO notice it is not always working!
+        exec.setProgress(100, "normalizing");
     	newNode.normalize();
     	
         exec.setProgress(100, "done");
