@@ -857,21 +857,21 @@ public final class NodeCategorical extends FiniteNode<NodeCategorical> {
 	@Override
 	public String toString() {
 		StringBuffer sb = new StringBuffer();
-		sb.append("p(");
+		sb.append("p( ");
 		sb.append(getName());
 		if (hasParents())
-			sb.append("|");
+			sb.append(" | ");
 		boolean first = true;
 		for (NodeCategorical p: getParents()) {
 			//sb.append(p.getName());
 			if (first) 
 				first = false;
 			else
-				sb.append(",");
+				sb.append(", ");
 			sb.append(p.getName());
 
 		}
-		sb.append(")");
+		sb.append(" )");
 		return sb.toString();
 	}
 	

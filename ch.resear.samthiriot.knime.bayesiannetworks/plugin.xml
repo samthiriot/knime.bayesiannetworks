@@ -100,6 +100,10 @@
       category-path="/community/bayesiannet/write"
       factory-class="ch.resear.thiriot.knime.bayesiannetworks.writer.net.NetWriterNodeFactory">
 </node>
+<node
+      category-path="/community/bayesiannet/sample"
+      factory-class="ch.resear.thiriot.knime.bayesiannetworks.enumerate.EnumerateBNNodeFactory">
+</node>
 
    </extension>
    

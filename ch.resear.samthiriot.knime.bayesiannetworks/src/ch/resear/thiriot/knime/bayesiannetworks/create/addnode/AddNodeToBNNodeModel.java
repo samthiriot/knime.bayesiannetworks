@@ -83,7 +83,7 @@ public class AddNodeToBNNodeModel extends NodeModel {
         	}
         	
         	// the domain of the variables should be known
-        	List<String> colsWithoutDomain = specColsWhichNeedDomain.stream().filter(sc -> sc.getDomain() == null).map(sc -> sc.getName()).collect(Collectors.toList());
+        	List<String> colsWithoutDomain = specColsWhichNeedDomain.stream().filter(sc -> sc.getDomain() == null || !sc.getDomain().hasValues()).map(sc -> sc.getName()).collect(Collectors.toList());
         	if (colsWithoutDomain.size() == 1) 
         		throw new InvalidSettingsException("the column "+colsWithoutDomain.get(0)+" has no domain; please add an upstream domain calculator");
         	else if (colsWithoutDomain.size() > 1)
