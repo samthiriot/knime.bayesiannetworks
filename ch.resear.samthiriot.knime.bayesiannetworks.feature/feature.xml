@@ -2,7 +2,7 @@
 <feature
       id="ch.resear.samthiriot.knime.bayesiannetworks.feature"
       label="Bayesian Networks for KNIME"
-      version="1.0.7.qualifier"
+      version="1.1.0.qualifier"
       provider-name="Samuel Thiriot"
       os="linux,macosx,win32"
       ws="cocoa,gtk,win32,wpf">
