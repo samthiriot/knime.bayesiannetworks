@@ -46,7 +46,6 @@ public class BayesianNetworkPortObject extends AbstractSimplePortObject {
 		this.bn = _bn;
 	}
 	
-	
 		
 	@Override
 	public JComponent[] getViews() {
@@ -58,7 +57,7 @@ public class BayesianNetworkPortObject extends AbstractSimplePortObject {
 			
 			if (!bn.nodes.isEmpty()) {
 				sb.append(":\n");
-				bn.enumerateNodes().stream().map(n -> "- " +n+" "+n.getDomain()+"\n").forEach(s -> sb.append(s));
+				bn.enumerateNodes().stream().map(n -> "- " +n+" "+NodeCategorical.getStrRepresentationOfDomain(n.getDomain())+"\n").forEach(s -> sb.append(s));
 			}
 			
 			JTextArea c = new JTextArea(sb.toString());

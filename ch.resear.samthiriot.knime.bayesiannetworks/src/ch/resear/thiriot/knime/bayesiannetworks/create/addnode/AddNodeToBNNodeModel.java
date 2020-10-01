@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,6 +34,7 @@ import org.knime.core.node.port.PortType;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
 import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortObject;
+import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortSpec;
 
 
 /**
@@ -61,6 +63,41 @@ public class AddNodeToBNNodeModel extends NodeModel {
    
     }
 
+
+    @Override
+	protected PortObjectSpec[] configure(PortObjectSpec[] inSpecs) throws InvalidSettingsException {
+	
+    	
+    	DataTableSpec specTable = (DataTableSpec)inSpecs[1];
+    	if (specTable != null) {
+    		
+    		// check the specs of the inputs table
+        	final int idxColProba = specTable.getNumColumns()-1;
+        	DataColumnSpec specColProba = specTable.getColumnSpec(idxColProba);
+        	
+        	List<DataColumnSpec> specColsWhichNeedDomain = IntStream.range(0, specTable.getNumColumns()-1).mapToObj(i -> specTable.getColumnSpec(i)).collect(Collectors.toList());
+        	
+        	// the last column should be double compatible
+        	if (!specColProba.getType().isCompatible(DoubleValue.class)) {
+        		throw new InvalidSettingsException("the last column of the input table (here, the column "+specColProba.getName()+") should be numeric");
+        	}
+        	
+        	// the domain of the variables should be known
+        	List<String> colsWithoutDomain = specColsWhichNeedDomain.stream().filter(sc -> sc.getDomain() == null).map(sc -> sc.getName()).collect(Collectors.toList());
+        	if (colsWithoutDomain.size() == 1) 
+        		throw new InvalidSettingsException("the column "+colsWithoutDomain.get(0)+" has no domain; please add an upstream domain calculator");
+        	else if (colsWithoutDomain.size() > 1)
+        		throw new InvalidSettingsException("the "+colsWithoutDomain.size()+" following columns have no domain: "+String.join(",", colsWithoutDomain)+"; please add an upstream domain calculator");
+            
+        	
+    	}
+    	
+    	
+        return new BayesianNetworkPortSpec[]{null};
+
+	}
+
+    
     @Override
 	protected PortObject[] execute(
 			PortObject[] inObjects, 
@@ -110,6 +147,8 @@ public class AddNodeToBNNodeModel extends NodeModel {
         // create the new variable (TODO ensure it does not exist already?)
         NodeCategorical newNode = new NodeCategorical(bn, specColVariable.getName());
 
+        List<String> createdDependantVariablesNames = new LinkedList<String>();
+        
         // ... find or create the parents
         Map<NodeCategorical,Integer> parentVariable2colIndex = new HashMap<>();
         for (DataColumnSpec dependantColSpec: specColsDependant) {
@@ -121,6 +160,10 @@ public class AddNodeToBNNodeModel extends NodeModel {
             	// this variable does not exists (yet)
             	logger.warn("the Bayesian network does not contain the dependant variable p("+dependantColSpec.getName()+"); "+
             				"we create it with domain "+domain+" and equiprobability");
+            	createdDependantVariablesNames.add(dependantColSpec.getName());
+            	setWarningMessage(
+            			"We created the dependant variable"+(createdDependantVariablesNames.size()>1 ? "s" :"")
+            			+ " "+String.join(", ", createdDependantVariablesNames)+" assuming equiprobability");
                 dependantVariable = new NodeCategorical(bn, dependantColSpec.getName());
                 dependantVariable.addDomain(domain);
                 double[] probas = new double[domain.size()];
@@ -211,13 +254,6 @@ public class AddNodeToBNNodeModel extends NodeModel {
 
     	// nothing to do
     }
-
-    @Override
-	protected PortObjectSpec[] configure(PortObjectSpec[] inSpecs) throws InvalidSettingsException {
-	
-        return new DataTableSpec[]{null};
-
-	}
 
 
     /**

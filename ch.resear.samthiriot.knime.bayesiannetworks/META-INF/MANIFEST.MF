@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: ReadBNFromXMLBIF-Node extension for KNIME Workbench
 Bundle-SymbolicName: ch.resear.thiriot.knime.bayesiannetworks.plugin;singleton:=true
-Bundle-Version: 1.0.7.qualifier
+Bundle-Version: 1.1.0.qualifier
 Bundle-ClassPath: .,
  readbnfromxmlbif.jar,
  lib/bcmail-jdk14-138.jar,

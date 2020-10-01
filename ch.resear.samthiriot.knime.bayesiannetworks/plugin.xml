@@ -80,10 +80,6 @@
    <extension
          point="org.knime.workbench.repository.nodes">
       <node category-path="/community/bayesiannet/read" factory-class="ch.resear.thiriot.knime.bayesiannetworks.reader.XMLBIFBNReaderNodeFactory"/>
-   <node category-path="/community/bayesiannet/sample" factory-class="ch.resear.thiriot.knime.bayesiannetworks.sample.SampleFromBNNodeFactory"/>
-<node category-path="/community/bayesiannet/learn" factory-class="ch.resear.thiriot.knime.bayesiannetworks.learn.LearnBNFromSampleNodeFactory"/>
-<node category-path="/community/bayesiannet/write" factory-class="ch.resear.thiriot.knime.bayesiannetworks.writer.xmlbif.BNXMLNBIFWriterNodeFactory"/>
-<node category-path="/community/bayesiannet/sample" factory-class="ch.resear.thiriot.knime.bayesiannetworks.augment.AugmentSampleWithBNNodeFactory"/>
 <node
       category-path="/community/bayesiannet/create"
       factory-class="ch.resear.thiriot.knime.bayesiannetworks.create.empty.CreateEmptyNodeFactory">
@@ -92,6 +88,10 @@
       category-path="/community/bayesiannet/create"
       factory-class="ch.resear.thiriot.knime.bayesiannetworks.create.addnode.AddNodeToBNNodeFactory">
 </node>
+<node category-path="/community/bayesiannet/learn" factory-class="ch.resear.thiriot.knime.bayesiannetworks.learn.LearnBNFromSampleNodeFactory"/>
+   <node category-path="/community/bayesiannet/sample" factory-class="ch.resear.thiriot.knime.bayesiannetworks.sample.SampleFromBNNodeFactory"/>
+<node category-path="/community/bayesiannet/sample" factory-class="ch.resear.thiriot.knime.bayesiannetworks.augment.AugmentSampleWithBNNodeFactory"/>
+<node category-path="/community/bayesiannet/write" factory-class="ch.resear.thiriot.knime.bayesiannetworks.writer.xmlbif.BNXMLNBIFWriterNodeFactory"/>
 <node
       category-path="/community/bayesiannet/write"
       factory-class="ch.resear.thiriot.knime.bayesiannetworks.writer.bif.BIFWriterNodeFactory">

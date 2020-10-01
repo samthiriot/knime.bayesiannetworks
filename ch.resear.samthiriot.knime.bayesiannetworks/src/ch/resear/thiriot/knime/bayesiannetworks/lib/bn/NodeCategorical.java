@@ -38,6 +38,24 @@ public final class NodeCategorical extends FiniteNode<NodeCategorical> {
 
 	protected final CategoricalBayesianNetwork cNetwork;
 	
+	/**
+	 * Returns a human readible repreentation of a domain, assuming that displaying more than 20 values
+	 * does not make sense.
+	 * So it returns [a, b, c, ...] in case of too many elements
+	 * @param domain
+	 * @return
+	 */
+	public static String getStrRepresentationOfDomain(List<String> domain) {
+		
+		// if only a few values: it's easy!
+		if (domain.size() <= 20)
+			return domain.toString();
+		
+		List<String> subdomain = new ArrayList<>(domain.subList(0, 19));
+		subdomain.add("...");
+		return subdomain.toString();
+	}
+	
 	public NodeCategorical(CategoricalBayesianNetwork net, String name) {
 		
 		super(net, name);
