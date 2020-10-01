@@ -103,7 +103,7 @@ public class BayesianNetwork<N extends AbstractNode<N>> {
 	}
 	
 	/**
-	 * returns the nodes in their order for browing them from root to leafs
+	 * returns the nodes in their order for browsing them from root to leafs
 	 * @return
 	 */
 	public List<N> enumerateNodes() {

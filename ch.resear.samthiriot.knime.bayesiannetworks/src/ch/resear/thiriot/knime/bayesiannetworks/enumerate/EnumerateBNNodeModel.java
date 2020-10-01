@@ -194,7 +194,7 @@ public class EnumerateBNNodeModel extends NodeModel {
     		i++;
         	exec.setProgress(
             		((double)i) / total, 
-            		"Adding row " + i);
+            		"Exploring combination " + i);
     		exec.checkCanceled();
 
     		Map<NodeCategorical, String> variable2value = it.next();
