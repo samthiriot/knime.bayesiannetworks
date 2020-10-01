@@ -2,6 +2,8 @@ package ch.resear.thiriot.knime.bayesiannetworks.enumerate;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -102,12 +104,12 @@ public class EnumerateBNNodeModel extends NodeModel {
 	}
     
     protected double computeProbability(
-    		CategoricalBayesianNetwork bn, 
+    		List<NodeCategorical> nodeOrderForBest, 
     		Map<NodeCategorical, String> variable2value) {
     	
     	double p = 1.0;
     	
-    	for (NodeCategorical node: bn.enumerateNodes()) {
+    	for (NodeCategorical node: nodeOrderForBest) {
     		//System.out.println(node);
     		
     		// create the list key/value for only the parents
@@ -120,7 +122,7 @@ public class EnumerateBNNodeModel extends NodeModel {
     		//System.out.println("p "+node+" => "+pp);
     		
     		if (pp == 0) {
-    			// if there is an impossibility, it will propagate!
+    			// if there is an impossibility, it will propagate anyway!
     			return 0;
     		}
     			
@@ -182,6 +184,22 @@ public class EnumerateBNNodeModel extends NodeModel {
         		bn);
         */
     	
+    	// create the order to compute probas; we start first with higher counts of zero
+    	// which will be eliminated first!
+    	List<NodeCategorical> nodeOrderForBest = new ArrayList<>(bn.enumerateNodes());
+    	nodeOrderForBest.sort(new Comparator<NodeCategorical>() {
+
+			@Override
+			public int compare(NodeCategorical o1, NodeCategorical o2) {
+				int r = -o1.getCountOfZeros().compareTo(o2.getCountOfZeros());
+				if (r==0)
+					r = o1.getCardinality()-o2.getCardinality();
+				return r;
+			}
+    		
+		});
+    	System.out.println(nodeOrderForBest);
+    	
     	// compute the maximum combination feasible 
     	long total = 1;
         for (NodeCategorical node : bn.enumerateNodes())
@@ -203,7 +221,7 @@ public class EnumerateBNNodeModel extends NodeModel {
         	//System.out.println("computing the joint probability");
         	//double p = bn.jointProbabilityFromFactors(variable2value);
         	
-        	double p = computeProbability(bn, variable2value);
+        	double p = computeProbability(nodeOrderForBest, variable2value);
         	
         	if (skipNull && p==0)
         		continue;
