@@ -69,6 +69,7 @@ public class BIFWriterNodeModel extends NodeModel {
     	// load from parameters the file to process
 		File fileData = new File(m_file.getStringValue());
 		
+		exec.setProgress(0.1, "writing into file");
 		bn.saveAsBIF(fileData);
 		
 		

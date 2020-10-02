@@ -69,8 +69,8 @@ public class BNXMLNBIFWriterNodeModel extends NodeModel {
     	// load from parameters the file to process
 		File fileData = new File(m_file.getStringValue());
 		
+		exec.setProgress(0.1, "writing into file");
 		bn.saveAsXMLBIF(fileData);
-		
 		
 		return new PortObject[] {};
 		
