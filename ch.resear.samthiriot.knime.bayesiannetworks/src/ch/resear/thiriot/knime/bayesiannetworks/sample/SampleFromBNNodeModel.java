@@ -207,12 +207,7 @@ public class SampleFromBNNodeModel extends NodeModel {
 		        			)
 	        			);
 	        	
-	        	try {
-	        		exec.checkCanceled();
-	        	} catch (CanceledExecutionException e) {
-	        		System.out.println("subthread canceled...");
-	        		throw e;
-	        	}
+	        	exec.checkCanceled();
 	        	
 	        }
 	    	
@@ -306,11 +301,9 @@ public class SampleFromBNNodeModel extends NodeModel {
 	        					count,
 	        					countDistributed
 	        			));
-	        	System.out.println("adding a sampler to generate "+count+" from "+countDistributed);
 	        	countDistributed += count;
 	        }
-        	System.out.println("adding a sampler to generate "+countRemaining+" from "+countDistributed);
-	        samplers.add(
+        	samplers.add(
 	        		new BNToTableSampler(
 	    					random, bn, outputSpec, 
 	    					exec.createSubExecutionContext(0.9/threadsToUse), 
