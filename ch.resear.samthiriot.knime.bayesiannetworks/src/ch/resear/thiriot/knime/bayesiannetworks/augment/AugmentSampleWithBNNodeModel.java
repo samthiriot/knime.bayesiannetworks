@@ -88,7 +88,7 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
     	try {
     		sampleRead = (BufferedDataTable)inObjects[0];
     	} catch (ClassCastException e) {
-    		throw new IllegalArgumentException("The second input should be a data table", e);
+    		throw new IllegalArgumentException("The first input should be a data table", e);
     	}
     	final BufferedDataTable sample = sampleRead;
     	
@@ -98,7 +98,7 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
     		BayesianNetworkPortObject capsule = (BayesianNetworkPortObject)inObjects[1];
     		bn = capsule.getBN();
     	} catch (ClassCastException e) {
-    		throw new IllegalArgumentException("The first input should be a Bayesian network", e);
+    		throw new IllegalArgumentException("The second input should be a Bayesian network", e);
     	}
     	    	
         // retrieve the seed parameter
@@ -209,10 +209,11 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
     		for (NodeCategorical nodeForEvidence: nodeEvidence2idx.keySet()) {
     			DataCell val = row.getCell(nodeEvidence2idx.get(nodeForEvidence));
     			
-    			engine.addEvidence(
-    					nodeForEvidence, 
-    					node2mapper.get(nodeForEvidence).getStringValueForCell(val)
-    					);
+    			if (!val.isMissing())
+    				engine.addEvidence(
+	    					nodeForEvidence, 
+	    					node2mapper.get(nodeForEvidence).getStringValueForCell(val)
+	    					);
     		}
     		engine.compute();
     		//System.err.println("p(evidence): "+engine.getProbabilityEvidence());
@@ -224,7 +225,8 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
     		}
     		
     		Map<NodeCategorical,String> generated = engine.sampleOne();
-
+    		engine.clearEvidence();
+    		
     		// add the novel values
     		for (NodeCategorical nodeToAdd: nodeToAdd2idx.keySet()) {
     			int idxRes = nodeToAdd2idx.get(nodeToAdd);

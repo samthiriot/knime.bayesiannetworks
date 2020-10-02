@@ -25,6 +25,12 @@
         </p>
         
         <p>
+        In case some columns used as evidence in the Bayesian networks contain missing values, 
+        the computation will use the probabilities described in the Bayesian network to 
+        compute a result anyway.
+        </p>
+        
+        <p>
         The random numbers are generated using the <a href="https://dst.lbl.gov/ACSSoftware/colt/">Colt library</a> 
         (see <a href="https://en.wikipedia.org/wiki/Colt_(libraries)">the wikipedia page</a>) published by CERN. 
 		</p>
