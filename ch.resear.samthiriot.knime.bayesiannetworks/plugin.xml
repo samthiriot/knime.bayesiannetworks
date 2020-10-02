@@ -104,6 +104,10 @@
       category-path="/community/bayesiannet/sample"
       factory-class="ch.resear.thiriot.knime.bayesiannetworks.enumerate.EnumerateBNNodeFactory">
 </node>
+<node
+      category-path="/community/bayesiannet/sample"
+      factory-class="ch.resear.thiriot.knime.bayesiannetworks.computeproba.ComputeProbaNodeFactory">
+</node>
 
    </extension>
    

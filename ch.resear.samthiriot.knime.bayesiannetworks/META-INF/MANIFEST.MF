@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: ReadBNFromXMLBIF-Node extension for KNIME Workbench
 Bundle-SymbolicName: ch.resear.thiriot.knime.bayesiannetworks.plugin;singleton:=true
-Bundle-Version: 1.2.1.qualifier
+Bundle-Version: 1.2.2.qualifier
 Bundle-ClassPath: .,
  readbnfromxmlbif.jar,
  lib/bcmail-jdk14-138.jar,
@@ -45,12 +45,14 @@ Export-Package: ch.resear.thiriot.knime.bayesiannetworks;
    org.knime.core.data,
    org.knime.core.node",
  ch.resear.thiriot.knime.bayesiannetworks.augment,
+ ch.resear.thiriot.knime.bayesiannetworks.computeproba,
  ch.resear.thiriot.knime.bayesiannetworks.create.addnode,
  ch.resear.thiriot.knime.bayesiannetworks.create.empty,
  ch.resear.thiriot.knime.bayesiannetworks.enumerate,
  ch.resear.thiriot.knime.bayesiannetworks.learn,
  ch.resear.thiriot.knime.bayesiannetworks.lib,
  ch.resear.thiriot.knime.bayesiannetworks.lib.bn,
+ ch.resear.thiriot.knime.bayesiannetworks.lib.inference,
  ch.resear.thiriot.knime.bayesiannetworks.port,
  ch.resear.thiriot.knime.bayesiannetworks.reader,
  ch.resear.thiriot.knime.bayesiannetworks.sample,

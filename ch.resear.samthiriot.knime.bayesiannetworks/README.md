@@ -11,6 +11,8 @@ Adds nodes for the KNIME workflow engine to use Bayesian networks.
 * complete existing data tables by addings new columns and the probability from the network
 * add nodes to a Bayesian network from KNIME data tables
 * enumerate all the combinations of values and the corresponding probabilities
+* compute the probability of a row
+
 
 # install it
 
