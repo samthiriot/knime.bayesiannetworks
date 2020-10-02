@@ -1,8 +1,13 @@
 package ch.resear.thiriot.knime.bayesiannetworks.enumerate;
 
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
+import org.knime.core.node.defaultnodesettings.DialogComponentNumberEdit;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
+import org.knime.core.node.defaultnodesettings.SettingsModelDoubleBounded;
 
 /**
  * <code>NodeDialog</code> for the "SampleFromBNNode" Node.
@@ -29,6 +34,28 @@ public class EnumerateBNNodeDialog extends DefaultNodeSettingsPane {
         		new SettingsModelBoolean("skip_null", true),
         	    "skip impossible combinations"
         	    ));
+        
+        SettingsModelBoolean m_skipOnEpsilon = new SettingsModelBoolean("skip_on_epsilon", true); 
+        addDialogComponent(new DialogComponentBoolean(
+        		m_skipOnEpsilon,
+        	    "skip combinations with too low probability"
+        	    ));
+        
+        SettingsModelDoubleBounded m_skipEpsilon = new SettingsModelDoubleBounded("skip_epsilon", 1e-6, 0.0, 1.0);
+        m_skipEpsilon.setEnabled(m_skipOnEpsilon.getBooleanValue());
+        addDialogComponent(new DialogComponentNumberEdit(
+        		m_skipEpsilon, 
+        		"lower probability"
+        		));
+        
+        m_skipOnEpsilon.addChangeListener(new ChangeListener() {
+			
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				m_skipEpsilon.setEnabled(m_skipOnEpsilon.getBooleanValue());
+			}
+		});
+        
     }
 }
 

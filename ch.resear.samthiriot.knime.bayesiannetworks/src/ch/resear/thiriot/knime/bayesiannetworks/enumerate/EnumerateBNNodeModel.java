@@ -8,7 +8,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
@@ -28,6 +30,7 @@ import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
+import org.knime.core.node.defaultnodesettings.SettingsModelDoubleBounded;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
@@ -39,7 +42,6 @@ import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwor
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.IteratorCategoricalVariables;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
 import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortObject;
-
 
 /**
  * This is the model implementation of SampleFromBNNode.
@@ -55,6 +57,8 @@ public class EnumerateBNNodeModel extends NodeModel {
     private static final ILogger ilogger = new LogIntoNodeLogger(logger);
         
     private final SettingsModelBoolean m_skipNull = new SettingsModelBoolean("skip_null", true);
+    private final SettingsModelBoolean m_skipOnEpsilon = new SettingsModelBoolean("skip_on_epsilon", true);
+    private final SettingsModelDoubleBounded m_skipEpsilon = new SettingsModelDoubleBounded("skip_epsilon", 1e-6, 0.0, 1.0);
 
     private Map<NodeCategorical,DataTableToBNMapper> node2mapper = new HashMap<>();
     
@@ -133,6 +137,52 @@ public class EnumerateBNNodeModel extends NodeModel {
     	
     }
     
+    /**
+     * If it is below epsilon, it will return -1
+     * 
+     * @param nodeOrderForBest
+     * @param variable2value
+     * @param epsilon
+     * @return
+     */
+    protected double computeProbabilityPruned(
+    		List<NodeCategorical> nodeOrderForBest, 
+    		Map<NodeCategorical, String> variable2value,
+    		double epsilon) {
+    	
+    	double p = 1.0;
+    	
+    	//int rank = 0;
+    	for (NodeCategorical node: nodeOrderForBest) {
+    		//System.out.println(node);
+    		//rank++;
+    		// create the list key/value for only the parents
+    		Map<NodeCategorical,String> parent2value = new HashMap<NodeCategorical, String>(variable2value);
+    		parent2value.keySet().retainAll(node.getParents());
+    		
+    		String value = variable2value.get(node);
+    		double pp = node.getProbability(value, parent2value);
+    		
+    		//System.out.println("p "+node+" => "+pp);
+    		
+    		if (pp == 0) {
+    			// if there is an impossibility, it will propagate anyway!
+    			//System.out.println("stop! 0 at rank "+rank);
+    			return 0;
+    		}
+    			
+    		p = p * pp;
+    		
+    		if (p < epsilon) {
+    			//System.out.println("stop! epsilon "+p+" at rank "+rank);
+    			return -1;
+    		}
+    	}
+    	
+    	return p;
+    	
+    }
+    
     @Override
 	protected PortObject[] execute(
 			PortObject[] inObjects, 
@@ -154,8 +204,10 @@ public class EnumerateBNNodeModel extends NodeModel {
     		throw new IllegalArgumentException("The input should be a Bayesian network", e);
     	}
     	
-    	final boolean skipNull = m_skipNull.getBooleanValue();
-
+    	final double skipEpsilon = m_skipEpsilon.getDoubleValue();
+    	final boolean skipOnEpsilon = m_skipOnEpsilon.getBooleanValue() && skipEpsilon > 0;
+    	final boolean skipNull = m_skipNull.getBooleanValue() || (m_skipOnEpsilon.getBooleanValue() && (skipEpsilon==0));
+    	
     	exec.setMessage("preparing the output table");
     	
     	// create output container
@@ -187,32 +239,100 @@ public class EnumerateBNNodeModel extends NodeModel {
     	// create the order to compute probas; we start first with higher counts of zero
     	// which will be eliminated first!
     	List<NodeCategorical> nodeOrderForBest = new ArrayList<>(bn.enumerateNodes());
-    	nodeOrderForBest.sort(new Comparator<NodeCategorical>() {
+		Map<NodeCategorical,Double> node2proportionZeros = nodeOrderForBest.stream().collect(
+				Collectors.toMap(
+	    				n -> n, 
+	    				n -> (double)n.getCountOfZeros()/n.getCardinality() ));
+    	if (skipOnEpsilon) {
+    		// the user asks for small probabilities to be skipped
+    		// so the best is to always start with the tables having zeros, as they will always drop below epsilon
+    		// many small values (median value)
+    		// so we quickly stop the exploration of combinations having to small probabilities
 
-			@Override
-			public int compare(NodeCategorical o1, NodeCategorical o2) {
-				int r = -o1.getCountOfZeros().compareTo(o2.getCountOfZeros());
-				if (r==0)
-					r = o1.getCardinality()-o2.getCardinality();
-				return r;
-			}
+    		Median median = new Median();
+    		Map<NodeCategorical,Double> node2median = nodeOrderForBest.stream().collect(
+    				Collectors.toMap(
+	    				n -> n, 
+	    				n -> median.evaluate(n.getContent()) ));
     		
-		});
-    	System.out.println(nodeOrderForBest);
+    		nodeOrderForBest.sort(new Comparator<NodeCategorical>() {
+    			
+				@Override
+				public int compare(NodeCategorical o1, NodeCategorical o2) {
+					Double proportionOfZeros1 = node2proportionZeros.get(o1);
+					Double proportionOfZeros2 = node2proportionZeros.get(o2);
+					// first compare on the proportion of zeros: the higher the better
+					int r = - proportionOfZeros1.compareTo(proportionOfZeros2);
+					
+					// or compare on the median: the lowest the better
+					if (r == 0) {
+						Double median1 = node2median.get(o1);
+						Double median2 = node2median.get(o2);
+						r = median1.compareTo(median2);
+					}
+					// of start with the biggest cardinality (because there are more chances to have small values there?)
+					if (r==0)
+						r = o2.getCardinality()-o1.getCardinality();
+					return r;
+				}
+	    		
+			});
+    		System.out.println(
+    				"nodes sorted according to median:\n"+
+					nodeOrderForBest.stream()
+    								.map(n -> n.getName()+": median "+
+    											node2median.get(n)+", "+
+    											n.getCountOfZeros()+" zeros, "+
+    											Integer.toString(n.getCardinality())+
+    											" values"
+    									)
+    								.collect(Collectors.joining("\n"))
+    				);
+    	} else { // if (skipNull) 
+	    	// the user asks for null probabilities to be skipped
+    		// or anyway a null probability avoids the combination of the rest of a combination!
+    		// so the best is to always start with the table having the highest count of zero
+    		// so we will first compute the probabilities of the tables having most zeros so we 
+    		// quickly drop combinations leading to 0
+    		nodeOrderForBest.sort(new Comparator<NodeCategorical>() {
+	
+				@Override
+				public int compare(NodeCategorical o1, NodeCategorical o2) {
+					Double proportionOfZeros1 = node2proportionZeros.get(o1);
+					Double proportionOfZeros2 = node2proportionZeros.get(o2);
+					// first compare on the proportion of zeros: the higher the better
+					int r = - proportionOfZeros1.compareTo(proportionOfZeros2);
+					// then, if equal, compare on size (why?)
+					if (r==0)
+						r = o1.getCardinality()-o2.getCardinality();
+					return r;
+				}
+	    		
+			});
+    		// display it to ensure we understood the thing
+    		System.out.println(
+    				"nodes sorted according to 0:\n"+
+					nodeOrderForBest.stream()
+    								.map(n -> n.getName()+": "+n.getCountOfZeros()+" zeros, "+	
+    										Integer.toString(n.getCardinality())+" values")
+    								.collect(Collectors.joining("\n"))
+    				);
+    	} 
     	
     	// compute the maximum combination feasible 
     	long total = 1;
         for (NodeCategorical node : bn.enumerateNodes())
         	total += total * node.getDomainSize();
-        System.out.println("total expected "+total);
+        System.out.println("worse total expected "+total);
 
     	long i=0;
+    	long added=0;
     	while (it.hasNext()) {
     		
     		i++;
         	exec.setProgress(
             		((double)i) / total, 
-            		"Exploring combination " + i);
+            		"Exploring combination " + i + ", "+added+" rows created");
     		exec.checkCanceled();
 
     		Map<NodeCategorical, String> variable2value = it.next();
@@ -221,7 +341,14 @@ public class EnumerateBNNodeModel extends NodeModel {
         	//System.out.println("computing the joint probability");
         	//double p = bn.jointProbabilityFromFactors(variable2value);
         	
-        	double p = computeProbability(nodeOrderForBest, variable2value);
+        	double p;
+        	if (skipOnEpsilon) 
+        		p = computeProbabilityPruned(nodeOrderForBest, variable2value, skipEpsilon);
+        	else 
+        		p = computeProbability(nodeOrderForBest, variable2value);
+
+        	if (skipOnEpsilon && p<skipEpsilon)
+        		continue;
         	
         	if (skipNull && p==0)
         		continue;
@@ -252,6 +379,7 @@ public class EnumerateBNNodeModel extends NodeModel {
 	        			results
 	        			)
         			);
+        	added++;
         	
     	}
     	
@@ -282,6 +410,8 @@ public class EnumerateBNNodeModel extends NodeModel {
     protected void saveSettingsTo(final NodeSettingsWO settings) {
     	
     	m_skipNull.saveSettingsTo(settings);
+    	m_skipEpsilon.saveSettingsTo(settings);
+    	m_skipOnEpsilon.saveSettingsTo(settings);
     }
 
     /**
@@ -292,6 +422,8 @@ public class EnumerateBNNodeModel extends NodeModel {
             throws InvalidSettingsException {
     	
     	m_skipNull.loadSettingsFrom(settings); 
+    	m_skipEpsilon.loadSettingsFrom(settings);
+    	m_skipOnEpsilon.loadSettingsFrom(settings);
     }
 
     /**
@@ -302,6 +434,8 @@ public class EnumerateBNNodeModel extends NodeModel {
             throws InvalidSettingsException {
     	
     	m_skipNull.validateSettings(settings);
+    	m_skipEpsilon.validateSettings(settings);
+    	m_skipOnEpsilon.validateSettings(settings);
     }
     
     /**

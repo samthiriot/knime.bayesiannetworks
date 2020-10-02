@@ -68,6 +68,10 @@ public final class NodeCategorical extends FiniteNode<NodeCategorical> {
 		this.cNetwork = net;
 	}
 	
+	public final double[] getContent() {
+		return Arrays.copyOf(content, content.length);
+	}
+	
 	public final CategoricalBayesianNetwork getNetwork() {
 		return cNetwork;
 	}

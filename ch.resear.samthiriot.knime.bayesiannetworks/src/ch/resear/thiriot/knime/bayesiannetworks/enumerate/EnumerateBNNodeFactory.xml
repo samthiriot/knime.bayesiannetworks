@@ -15,13 +15,33 @@
         <intro>
         Using a Bayesian network which describes densities of probabilities, 
         this node generates a data table  
-        with columns corresponding the variables of the BN, and the content of cells being the categories of the variables.
-        
+        with columns corresponding the variables of the BN, 
+        and the content of cells being the combinations of the categories of the variables.
+ 		<br/>
+ 		Enumeration of all the nodes depends on the count of variables and of their domains. 
+ 		It might be very long, as its cost grows as a combination of the variables and domains sizes.
+ 		As a general rule of thumb, it is often better to use sampling out of a network 
+ 		than enumerate all its possibilities. Enumeration mostly makes sense on small networks,
+ 		or on networks containing many zeros in the conditional probability tables.
+ 		<br/>
+ 		Enumeration is more tractable if we reduce the combinations by pruning some possibilities.
+ 		<ul>
+ 		<li>The first way to make it is not to create the rows for which probability is null. 
+ 		This way the algorithm will first try to compute the nodes containing many zeros, so it will 
+ 		quickly stop computing many combinations, and will also not spend time writing the rows into the table.</li>
+ 		<li>Another possibility is to define a minimal probability for a row to be added to the 
+ 		resulting table. In this case the algorithm will first explore nodes containing small 
+ 		probabilities, and stop computing the combination as soon as the probability drops below the given probability.
+ 		</li>
+ 		</ul>
+ 		
+ 		<br/>
         Go there to <a href="https://github.com/samthiriot/knime-shapefiles-as-WKT/issues">report bugs or ask for features</a>
         </intro>
         
-        
-        <option name="skip null">when a combination of values leads to 0, do not create the line (default)</option>
+        <option name="skip impossible combinations">when a combination of values leads to probability 0, do not create the row (default)</option>
+        <option name="skip combinations with too low probabilities">when a combination of values has a probability below epsilon, do not create the row (default)</option>
+        <option name="minimal probability">lowest probability to consider. Note that large networks always lead to very small probabilities, so even 1E-50 might keep no result!</option>    
 
     </fullDescription>
     
