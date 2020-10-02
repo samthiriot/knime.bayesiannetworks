@@ -51,10 +51,10 @@ Export-Package: ch.resear.thiriot.knime.bayesiannetworks;
  ch.resear.thiriot.knime.bayesiannetworks.learn,
  ch.resear.thiriot.knime.bayesiannetworks.lib,
  ch.resear.thiriot.knime.bayesiannetworks.lib.bn,
- ch.resear.thiriot.knime.bayesiannetworks.lib.inference,
  ch.resear.thiriot.knime.bayesiannetworks.port,
  ch.resear.thiriot.knime.bayesiannetworks.reader,
  ch.resear.thiriot.knime.bayesiannetworks.sample,
+ ch.resear.thiriot.knime.bayesiannetworks.test.lib.inference,
  ch.resear.thiriot.knime.bayesiannetworks.writer.bif,
  ch.resear.thiriot.knime.bayesiannetworks.writer.net,
  ch.resear.thiriot.knime.bayesiannetworks.writer.xmlbif

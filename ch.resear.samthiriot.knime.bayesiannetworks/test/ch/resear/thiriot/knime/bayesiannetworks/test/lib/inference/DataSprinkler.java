@@ -1,4 +1,4 @@
-package ch.resear.thiriot.knime.bayesiannetworks.lib.inference;
+package ch.resear.thiriot.knime.bayesiannetworks.test.lib.inference;
 
 import java.util.Collections;
 import java.util.HashMap;

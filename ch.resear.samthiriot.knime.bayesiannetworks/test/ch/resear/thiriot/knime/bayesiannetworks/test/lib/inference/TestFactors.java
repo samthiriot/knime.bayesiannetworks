@@ -1,4 +1,4 @@
-package ch.resear.thiriot.knime.bayesiannetworks.lib.inference;
+package ch.resear.thiriot.knime.bayesiannetworks.test.lib.inference;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -9,6 +9,7 @@ import org.junit.Test;
 
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.Factor;
 
 public class TestFactors {
 

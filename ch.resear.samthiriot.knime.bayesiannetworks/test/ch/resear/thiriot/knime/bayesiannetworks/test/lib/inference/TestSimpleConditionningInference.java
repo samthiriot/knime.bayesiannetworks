@@ -1,4 +1,4 @@
-package ch.resear.thiriot.knime.bayesiannetworks.lib.inference;
+package ch.resear.thiriot.knime.bayesiannetworks.test.lib.inference;
 
 import static org.junit.Assert.assertEquals;
 
@@ -11,6 +11,7 @@ import cern.jet.random.engine.RandomEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.LogIntoJavaLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.SimpleConditionningInferenceEngine;
 
 public class TestSimpleConditionningInference {
 

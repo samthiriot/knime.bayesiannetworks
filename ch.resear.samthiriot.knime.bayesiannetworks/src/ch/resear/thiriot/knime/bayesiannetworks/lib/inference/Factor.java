@@ -37,7 +37,7 @@ public final class Factor {
 
 	protected final boolean keepZeros = false;
 	
-	protected Map<Map<NodeCategorical,String>,Double> values = new HashMap<>();
+	public Map<Map<NodeCategorical,String>,Double> values = new HashMap<>();
 	
 	protected LRUMap<NodeCategorical,Map<String,Factor>> cacheReductionVariable2ValueToResult = null;
 	

@@ -1,4 +1,4 @@
-package ch.resear.thiriot.knime.bayesiannetworks.lib.inference;
+package ch.resear.thiriot.knime.bayesiannetworks.test.lib.inference;
 
 import static org.junit.Assert.assertEquals;
 
@@ -16,6 +16,9 @@ import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.LogIntoJavaLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.DNode;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.EliminationOrderDeepFirstSearch;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.InferencePerformanceUtils;
 
 public class TestDTree {
 

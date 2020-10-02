@@ -1,4 +1,4 @@
-package ch.resear.thiriot.knime.bayesiannetworks.lib.inference;
+package ch.resear.thiriot.knime.bayesiannetworks.test.lib.inference;
 
 import static org.junit.Assert.assertEquals;
 
@@ -30,6 +30,13 @@ import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.LogIntoJavaLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.AbstractInferenceEngine;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.BestInferenceEngine;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.EliminationInferenceEngine;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.Factor;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.InferencePerformanceUtils;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.RecursiveConditionningEngine;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.SimpleConditionningInferenceEngine;
 
 /**
  * Tips: run with JVM parameters -XX:+PrintGCDetails to debug memory garbage collecting  

@@ -31,6 +31,6 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="src" path="test"/>
+	<classpathentry including="**/*.java" kind="src" path="test"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -285,7 +285,7 @@ public final class DNode {
 	 * @param cutset
 	 * @return
 	 */
-	protected static DNode eliminationOrder2DTree(CategoricalBayesianNetwork bn, List<NodeCategorical> cutset) {
+	public static DNode eliminationOrder2DTree(CategoricalBayesianNetwork bn, List<NodeCategorical> cutset) {
 		
 		if (logger.isDebugEnabled())
 			logger.debug("create DTree from elimination order " + cutset);
