@@ -2,10 +2,15 @@ package ch.resear.thiriot.knime.bayesiannetworks.sample;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
@@ -22,6 +27,7 @@ import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelSeed;
 import org.knime.core.node.port.PortObject;
@@ -55,6 +61,8 @@ public class SampleFromBNNodeModel extends NodeModel {
             .getLogger(SampleFromBNNodeModel.class);
     private static final ILogger ilogger = new LogIntoNodeLogger(logger);
         
+    private static final int MIN_ROWS_FOR_PARALLEL = 19;
+    
     /** the settings key which is used to retrieve and 
         store the settings (from the dialog or from a settings file)    
        (package visibility to be usable from the dialog). */
@@ -69,13 +77,20 @@ public class SampleFromBNNodeModel extends NodeModel {
     private final SettingsModelIntegerBounded m_count =
         new SettingsModelIntegerBounded(SampleFromBNNodeModel.CFGKEY_COUNT,
                     SampleFromBNNodeModel.DEFAULT_COUNT,
-                    Integer.MIN_VALUE, Integer.MAX_VALUE);
+                    0, Integer.MAX_VALUE);
     
     private final SettingsModelSeed m_seed = 
     		new SettingsModelSeed(
     				"seed", 
     				(int)System.currentTimeMillis(), 
     				false);
+    
+    private final SettingsModelBoolean m_threadsAuto = new SettingsModelBoolean(
+    		"m_threads_auto", 
+    		true);
+    private final SettingsModelIntegerBounded m_threads = new SettingsModelIntegerBounded(
+    		"m_threads", 
+    		Runtime.getRuntime().availableProcessors(), 1, 128);
 
     private Map<NodeCategorical,DataTableToBNMapper> node2mapper = new HashMap<>();
     
@@ -118,6 +133,97 @@ public class SampleFromBNNodeModel extends NodeModel {
 
 	}
     
+    private long totalRowsGenerated = 0;
+    
+    private class BNToTableSampler implements Callable<BufferedDataTable> {
+
+    	private final RandomEngine random;
+    	private final AbstractInferenceEngine engine;
+    	private final DataTableSpec outputSpec;
+    	private final ExecutionContext exec;
+    	private final int countToSample;
+    	private final CategoricalBayesianNetwork bn;
+        private final int firstId;
+        
+    	public BNToTableSampler(
+    				RandomEngine _random, 
+    				CategoricalBayesianNetwork bn,
+    				DataTableSpec outputSpec,
+    				ExecutionContext exec,
+    				int countToSample,
+    				int firstId) {
+
+    		this.outputSpec = outputSpec;
+    		this.exec = exec;
+    		this.countToSample = countToSample;
+    		this.bn = bn;
+    		this.firstId = firstId;
+    		
+    		this.random = new MersenneTwister(_random.nextInt());
+            
+    		this.engine = new SimpleConditionningInferenceEngine(
+            		ilogger, 
+            		random,
+            		bn);
+    	}
+    	
+		@Override
+		public BufferedDataTable call() throws Exception {
+
+	        BufferedDataContainer container = exec.createDataContainer(outputSpec);
+	        for (int i=0; i<countToSample; i++) {
+	            
+	        	totalRowsGenerated++;
+	        	
+	        	if (totalRowsGenerated%7==0)
+	        		exec.setMessage("row "+totalRowsGenerated);
+	        	
+	        	exec.setProgress(
+	            		((double)i+1.0) / countToSample//, 
+	            		//"Adding row " + i
+	            		);
+	            
+	        	// TODO draw several individuals a time ?
+	        	
+	        	// sample one individual
+	        	Map<NodeCategorical,String> variable2value = engine.sampleOne();
+	        	
+	        	// convert to KNIME cells
+	        	DataCell[] results = new DataCell[variable2value.size()];
+	        	int j=0;
+	        	for (NodeCategorical node : bn.enumerateNodes()) {
+	        		
+	        		String valueStr = variable2value.get(node);
+	        		
+	        		results[j++] = node2mapper.get(node).createCellForStringValue(valueStr);
+	        		
+	        	}
+	        	
+	        	// append
+	        	container.addRowToTable(
+	        			new DefaultRow(
+		        			new RowKey("Row " + (i+firstId)), 
+		        			results
+		        			)
+	        			);
+	        	
+	        	try {
+	        		exec.checkCanceled();
+	        	} catch (CanceledExecutionException e) {
+	        		System.out.println("subthread canceled...");
+	        		throw e;
+	        	}
+	        	
+	        }
+	    	
+	        // once we are done, we close the container and return its table
+	        container.close();
+	        
+			return container.getTable();
+		}
+    	
+    }
+    
     @Override
 	protected PortObject[] execute(
 			PortObject[] inObjects, 
@@ -157,86 +263,90 @@ public class SampleFromBNNodeModel extends NodeModel {
     	DataColumnSpec[] columnSpecs = createSpecsForBN(bn);
         DataTableSpec outputSpec = new DataTableSpec(columnSpecs);
     			
-        BufferedDataContainer container = exec.createDataContainer(outputSpec);
 
         exec.setMessage("init of the random engine");
     	logger.info("generating random numbers using the MersenneTwister pseudo-random number generator with seed "+seed+", as implemented in the COLT library "
         		+Version.getMajorVersion()+"."+Version.getMinorVersion()+"."+Version.getMicroVersion());
-        
         final RandomEngine random = new MersenneTwister(seed);
         exec.checkCanceled();
 
         exec.setMessage("preparation of the inference engine");
-    	
-        // get a Bayesian inference engine
-        /*final AbstractInferenceEngine engine = new BestInferenceEngine(
-        		ilogger, 
-        		random,
-        		bn);*/
-        // simple conditioning is the best engine when it comes to sample without evidence
-        final AbstractInferenceEngine engine = new SimpleConditionningInferenceEngine(
-        		ilogger, 
-        		random,
-        		bn);
-        
+    	logger.info("using the Simple Conditioning Inference Engine");
         exec.checkCanceled();
-        logger.info("using the Simple Conditioning Inference Engine");
-
+        
+        // prepare parallel processing
+        int threadsToUse = 1;
+        {
+	        int threadsMax = m_threads.getIntValue(); 
+	    	if (m_threadsAuto.getBooleanValue())
+	    		threadsMax = Runtime.getRuntime().availableProcessors();
+	    	
+	    	while ( (threadsToUse < threadsMax) && (countToSample / threadsToUse > MIN_ROWS_FOR_PARALLEL) ) {
+	    		threadsToUse++;
+	    	}
+	    	logger.debug("will use "+threadsToUse+" threads to generate the data");
+        }
+    	
         exec.setProgress(0, "generating rows");
-    	final long timestart = System.currentTimeMillis();
-
-
     	InferencePerformanceUtils.singleton.reset();
     	
-        for (int i=0; i<countToSample; i++) {
-            
-        	exec.setProgress(
-            		((double)i+1.0) / countToSample, 
-            		"Adding row " + i);
-            
-        	// TODO draw several individuals a time ?
-        	
-        	// sample one individual
-        	Map<NodeCategorical,String> variable2value = engine.sampleOne();
-        	
-        	// convert to KNIME cells
-        	DataCell[] results = new DataCell[variable2value.size()];
-        	int j=0;
-        	for (NodeCategorical node : bn.enumerateNodes()) {
-        		
-        		String valueStr = variable2value.get(node);
-        		
-        		results[j++] = node2mapper.get(node).createCellForStringValue(valueStr);
-        		
-        	}
-        	
-        	// append
-        	container.addRowToTable(
-        			new DefaultRow(
-	        			new RowKey("Row " + i), 
-	        			results
-	        			)
+    	// submit the execution of the threads
+        exec.setMessage("sampling");
+        List<BNToTableSampler> samplers = new ArrayList<SampleFromBNNodeModel.BNToTableSampler>(threadsToUse);
+    	{
+    		int countRemaining = countToSample;
+    		int countDistributed = 0;
+	        for (int t=0; t<threadsToUse-1; t++) {
+	        	int count = countToSample/threadsToUse;
+	        	countRemaining -= count;
+	        	samplers.add(
+	        			new BNToTableSampler(
+	        					random, bn, outputSpec, 
+	        					exec.createSubExecutionContext(0.9/threadsToUse), 
+	        					count,
+	        					countDistributed
+	        			));
+	        	System.out.println("adding a sampler to generate "+count+" from "+countDistributed);
+	        	countDistributed += count;
+	        }
+        	System.out.println("adding a sampler to generate "+countRemaining+" from "+countDistributed);
+	        samplers.add(
+	        		new BNToTableSampler(
+	    					random, bn, outputSpec, 
+	    					exec.createSubExecutionContext(0.9/threadsToUse), 
+	    					countRemaining,
+	    					countDistributed
+	    			));
+
+    	}
+        exec.checkCanceled();
+
+        // submit executions
+    	ExecutorService executorService = Executors.newFixedThreadPool(threadsToUse);
+    	totalRowsGenerated = 0;
+    	List<Future<BufferedDataTable>> results = executorService.invokeAll(samplers);
+        
+        exec.checkCanceled();
+        
+        // merge
+        exec.setProgress("merging tables");
+        BufferedDataTable resTable;
+        {
+	        final BufferedDataTable[] resultTables = new BufferedDataTable[threadsToUse];
+	        for (int i = 0; i < resultTables.length; i++) {
+	            resultTables[i] = results.get(i).get();
+	        }
+	        resTable = exec.createConcatenateTable(
+        			exec.createSubProgress(0.1), 
+        			resultTables
         			);
-        	
-
-        	//if (i % 10 == 0) { // TODO granularity?
-	            // check if the execution monitor was canceled
-            exec.checkCanceled();
-
-        	//}
         }
-    	final long timeend = System.currentTimeMillis();
-    	final long durationms = (timeend - timestart);
-    	logger.info("inference took "+(durationms/countToSample)+"ms per line");
-    	
+        
         pushFlowVariableInt("sampled_count", countToSample);
 
-        exec.setProgress(100, "closing outputs");
+        //exec.setProgress(100, "closing outputs");
 
-        // once we are done, we close the container and return its table
-        container.close();
-        BufferedDataTable out = container.getTable();
-        return new BufferedDataTable[]{out};
+        return new BufferedDataTable[]{ resTable };
         
 	}
 
@@ -261,6 +371,9 @@ public class SampleFromBNNodeModel extends NodeModel {
         
         m_count.saveSettingsTo(settings);
         m_seed.saveSettingsTo(settings);
+        
+        m_threads.saveSettingsTo(settings);
+        m_threadsAuto.saveSettingsTo(settings);
     }
 
     /**
@@ -272,6 +385,9 @@ public class SampleFromBNNodeModel extends NodeModel {
             
         m_count.loadSettingsFrom(settings);
         m_seed.loadSettingsFrom(settings);
+        
+        m_threads.loadSettingsFrom(settings);
+        m_threadsAuto.loadSettingsFrom(settings);
     }
 
     /**
@@ -284,6 +400,8 @@ public class SampleFromBNNodeModel extends NodeModel {
         m_count.validateSettings(settings);
         m_seed.validateSettings(settings);
         
+        m_threads.validateSettings(settings);
+        m_threadsAuto.validateSettings(settings);
     }
     
     /**

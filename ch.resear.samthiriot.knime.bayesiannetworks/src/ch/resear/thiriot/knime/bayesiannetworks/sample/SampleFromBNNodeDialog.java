@@ -1,8 +1,13 @@
 package ch.resear.thiriot.knime.bayesiannetworks.sample;
 
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentNumber;
 import org.knime.core.node.defaultnodesettings.DialogComponentSeed;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelSeed;
 
@@ -41,6 +46,23 @@ public class SampleFromBNNodeDialog extends DefaultNodeSettingsPane {
         				false),
         	    "seed"
         	    ));
+        
+        SettingsModelBoolean m_threadsAuto = new SettingsModelBoolean(
+        		"m_threads_auto", 
+        		true);
+        SettingsModelIntegerBounded m_threads = new SettingsModelIntegerBounded(
+        		"m_threads", 
+        		Runtime.getRuntime().availableProcessors(), 1, 128);
+        m_threads.setEnabled(!m_threadsAuto.getBooleanValue());
+        m_threadsAuto.addChangeListener(new ChangeListener() {
+			@Override
+			public void stateChanged(ChangeEvent e) {
+		        m_threads.setEnabled(!m_threadsAuto.getBooleanValue());
+			}
+		});
+        addDialogComponent(new DialogComponentBoolean(m_threadsAuto, "use all CPUs"));
+        addDialogComponent(new DialogComponentNumber(m_threads, "max CPUs to use", 1));
+        
     }
 }
 
