@@ -44,6 +44,7 @@ import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwor
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.AbstractInferenceEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.InferencePerformanceUtils;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.RecursiveConditionningEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.SimpleConditionningInferenceEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortObject;
 
@@ -161,10 +162,13 @@ public class SampleFromBNNodeModel extends NodeModel {
     		
     		this.random = new MersenneTwister(_random.nextInt());
             
+    		this.engine = new SimpleConditionningInferenceEngine(ilogger, _random, bn);
+    		
+    		/*
     		this.engine = new SimpleConditionningInferenceEngine(
             		ilogger, 
             		random,
-            		bn);
+            		bn);*/
     	}
     	
 		@Override

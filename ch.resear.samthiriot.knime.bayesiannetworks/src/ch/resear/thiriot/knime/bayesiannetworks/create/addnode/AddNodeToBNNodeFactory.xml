@@ -24,17 +24,16 @@
         the last column should contain the double value with the probability.
         </intro>
         
-        
         <option name="accept multiple occurences">if the table is the result of a group by, should be false. 
         				Check it if the node should accept several times the same combinations</option>
         
     </fullDescription>
     
     <ports>
-        <inPort index="0" name="sample">Original sample</inPort>
-        <inPort index="1" name="Bayesian network">Bayesian network</inPort>
+        <inPort index="0" name="Bayesian network">Bayesian network to modify</inPort>
+        <inPort index="1" name="table">data table containing the probabilities</inPort>
         
-        <outPort index="0" name="sample">Augmented sample</outPort>
+        <outPort index="0" name="Bayesian network">Bayesian network with the additional node</outPort>
         
     </ports>    
     
