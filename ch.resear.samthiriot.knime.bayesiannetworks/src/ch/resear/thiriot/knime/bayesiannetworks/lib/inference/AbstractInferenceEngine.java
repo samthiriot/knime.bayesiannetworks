@@ -2,6 +2,7 @@ package ch.resear.thiriot.knime.bayesiannetworks.lib.inference;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -80,7 +81,7 @@ public abstract class AbstractInferenceEngine {
 	
 	public void compute() {
 		
-		
+	
 		// propagate probabilities (belief propagation)
 		
 		dirty = false;
@@ -124,6 +125,11 @@ public abstract class AbstractInferenceEngine {
 		if (evidenceVariable2value.isEmpty()) {
 			// TODO ? 
 			//return n.getConditionalProbabilityPosterior(s);
+			
+			// if there is no parent, this is a direct answer from the node CPT
+			if (!n.hasParents()) {
+				return n.getProbability(s);
+			}
 		}
 		
 		// if that is directly conditionned by evidence, return it
@@ -239,6 +245,47 @@ public abstract class AbstractInferenceEngine {
 		}
 	}
 	
+	private Map<NodeCategorical,double[]> node2cumulatedProbability = new HashMap<>();
+	
+	private double[] getCumulatedProbabilities(NodeCategorical n) {
+		
+		double[] res = node2cumulatedProbability.get(n);
+		
+		if (res == null) {
+		
+			// build the table of cumulated probas 
+			
+			res = new double[n.getDomainSize()];
+		
+			List<String> domain = n.getDomain();
+			//System.err.println("should pick a value for "+n.name);
+			
+			double cumulated = 0.;
+			for (int i=0; i<domain.size(); i++) {
+				double p = this.getConditionalProbability(n, domain.get(i));
+				cumulated += p;
+				res[i] = cumulated;
+			}
+			
+			node2cumulatedProbability.put(n, res);
+		}
+		
+		return res;
+	}
+	
+	private String sampleValueWithProbaCache(NodeCategorical n, double rng) {
+		
+		double[] cumulated = getCumulatedProbabilities(n);
+		
+		int idx = java.util.Arrays.binarySearch(cumulated, rng);
+		if (idx > 0) {
+			return n.getDomain(idx); 
+		} else {
+			return n.getDomain(-idx-1);
+		}
+		
+	}
+	
 	/**
 	 * Generates an instanciation of the network given current evidence. 
 	 * The default implementation works for any inference engine, but inheriting classes
@@ -265,26 +312,42 @@ public abstract class AbstractInferenceEngine {
 			if (originalEvidence.containsKey(n))
 					value = originalEvidence.get(n);
 			else {
-				
+			
 				final double random = rng.nextDouble();
-				// pick up a value
-				double cumulated = 0.;
 				
-				//System.err.println("should pick a value for "+n.name);
-				for (String v : n.getDomain()) {
+				if (!n.hasParents())
+					// we can use a method with a cache of cumulated probabilities
+					value = sampleValueWithProbaCache(n, random);
+				else { 
 					
-					double p = this.getConditionalProbability(n, v);
-					cumulated += p;
-					//System.err.println("p("+n.name+"="+v+")="+p+" => "+cumulated+" ("+random+")");
-	
-					if (cumulated >= random) {
-						value = v;
-						break;
+					//value = weightedRoulette(n, random);
+					
+					// TODO maybe there is a way to optimize here
+					// by indexing the cumulated probability over the domain
+					// store a few elements such as 
+					// for a given node
+					// probabilities [0.1,0.2...0.9}
+					// are in domain [a, b ....z]
+					
+					// pick up a value
+					double cumulated = 0.;
+					
+					//System.err.println("should pick a value for "+n.name);
+					for (String v : n.getDomain()) {
+						
+						double p = this.getConditionalProbability(n, v);
+						cumulated += p;
+						//System.err.println("p("+n.name+"="+v+")="+p+" => "+cumulated+" ("+random+")");
+		
+						if (cumulated >= random) {
+							value = v;
+							break;
+						}
 					}
+					if (value == null)
+						throw new RuntimeException("oops, should have picked a value based on postererior probabilities for variable "+n+" knowing "+evidenceVariable2value //+", but they sum to "+cumulated
+								);
 				}
-				if (value == null)
-					throw new RuntimeException("oops, should have picked a value based on postererior probabilities for variable "+n+" knowing "+evidenceVariable2value+", but they sum to "+cumulated);
-				
 			}
 			// that' the property of this individual
 			node2attribute.put(n, value);
