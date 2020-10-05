@@ -1,5 +1,6 @@
 package ch.resear.thiriot.knime.bayesiannetworks.lib.inference;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -7,6 +8,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.knime.core.node.CanceledExecutionException;
+import org.knime.core.node.ExecutionMonitor;
+
+import cern.colt.Arrays;
 import cern.jet.random.AbstractContinousDistribution;
 import cern.jet.random.Uniform;
 import cern.jet.random.engine.RandomEngine;
@@ -361,7 +366,8 @@ public abstract class AbstractInferenceEngine {
 		
 		return node2attribute;
 	}
-	
+
+		
 	/**
 	 * returns the probability for the current evidence.
 	 * @return

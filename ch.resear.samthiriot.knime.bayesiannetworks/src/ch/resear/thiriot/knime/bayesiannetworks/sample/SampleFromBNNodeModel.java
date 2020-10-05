@@ -14,9 +14,12 @@ import java.util.concurrent.Future;
 
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
+import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.RowKey;
 import org.knime.core.data.def.DefaultRow;
+import org.knime.core.data.def.IntCell;
+import org.knime.core.data.def.IntCell.IntCellFactory;
 import org.knime.core.node.BufferedDataContainer;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
@@ -42,10 +45,8 @@ import ch.resear.thiriot.knime.bayesiannetworks.LogIntoNodeLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.AbstractInferenceEngine;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.InferencePerformanceUtils;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.RecursiveConditionningEngine;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.SimpleConditionningInferenceEngine;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.EntitiesAndCount;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.RecursiveSamplingIterator;
 import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortObject;
 
 
@@ -123,6 +124,8 @@ public class SampleFromBNNodeModel extends NodeModel {
     		specs.add(node2mapper.get(node).getSpecForNode());
     	}
     	
+    	specs.add(new DataColumnSpecCreator("count", IntCell.TYPE).createSpec());
+    	
     	return specs.toArray(new DataColumnSpec[specs.size()]);
     }
     
@@ -135,18 +138,20 @@ public class SampleFromBNNodeModel extends NodeModel {
 	}
     
     private long totalRowsGenerated = 0;
+    private long timestampStart = 0;
+    private long timestampLastLog = 0; 
     
     private class BNToTableSampler implements Callable<BufferedDataTable> {
 
-    	private final AbstractInferenceEngine engine;
     	private final DataTableSpec outputSpec;
     	private final ExecutionContext exec;
     	private final int countToSample;
     	private final CategoricalBayesianNetwork bn;
         private final int firstId;
+        private final RandomEngine random;
         
     	public BNToTableSampler(
-    				RandomEngine _random, 
+    				RandomEngine random, 
     				CategoricalBayesianNetwork bn,
     				DataTableSpec outputSpec,
     				ExecutionContext exec,
@@ -158,25 +163,86 @@ public class SampleFromBNNodeModel extends NodeModel {
     		this.countToSample = countToSample;
     		this.bn = bn;
     		this.firstId = firstId;
-    	            
-    		this.engine = new SimpleConditionningInferenceEngine(ilogger, _random, bn);
-    		
+    		this.random = random;
+    	                		
     	}
     	
 		@Override
 		public BufferedDataTable call() throws Exception {
 
 	        BufferedDataContainer container = exec.createDataContainer(outputSpec);
+
+	        RecursiveSamplingIterator it = new RecursiveSamplingIterator(countToSample, bn, random, exec);
+	        int done = 0;
+	        int rows = 0;
+	        long timestampStart = System.currentTimeMillis();
+	        while (it.hasNext()) {
+	        	
+	        	String msg = "sampling entity "+done;
+	        	long timestampNow = System.currentTimeMillis();
+	        	if (firstId == 0) { // only the first thread makes it
+		        	long elapsedSeconds = (timestampNow - timestampStart)/1000;
+		        	if (elapsedSeconds > 10) {
+			        	double entitiesPerSecond = totalRowsGenerated / elapsedSeconds;
+			        	timestampLastLog = timestampNow;
+			        	//logger.warn("generating "+((int)entitiesPerSecond)+" rows per second");
+			        	msg = msg + " ("+(int)entitiesPerSecond+"/s)";
+		        	}
+		        	exec.setProgress((double)done/countToSample, msg);
+	        	} else {
+	        		exec.setProgress((double)done/countToSample);
+	        	}
+	        	
+	        	EntitiesAndCount next = it.next();
+	        	done += next.count;
+	        	totalRowsGenerated += next.count;
+	        	
+	        	//System.out.println(next);
+	        	
+	        	// convert to KNIME cells
+	        	DataCell[] results = new DataCell[next.node2value.size()+1];
+	        	int j=0;
+	        	for (NodeCategorical node : bn.enumerateNodes()) {
+	        		
+	        		String valueStr = next.node2value.get(node);
+	        		
+	        		results[j++] = node2mapper.get(node).createCellForStringValue(valueStr);
+	        		
+	        	}
+	        	results[j] = IntCellFactory.create(next.count);
+	        	
+	        	// append
+	        	container.addRowToTable(
+	        			new DefaultRow(
+		        			new RowKey("Row " + (firstId + rows++) ), 
+		        			results
+		        			)
+	        			);
+	        	exec.checkCanceled();
+	        }
+	        
+	        container.close();
+	        
+	        /*
+	        BufferedDataContainer container = exec.createDataContainer(outputSpec);
 	        for (int i=0; i<countToSample; i++) {
 	            
 	        	totalRowsGenerated++;
 	        	
-	        	if (totalRowsGenerated % 7 == 0) {
-	        		exec.setMessage("row "+totalRowsGenerated);
-		        	exec.setProgress(
-		            		((double)i+1.0) / countToSample//, 
-		            		//"Adding row " + i
-		            		);
+	        	if (firstId == 0) { // && totalRowsGenerated % 2 == 0
+	        		String msg = "row "+totalRowsGenerated;
+
+		        	long timestampNow = System.currentTimeMillis();
+		        	{
+			        	long elapsedSeconds = (timestampNow - timestampStart)/1000;
+			        	if (elapsedSeconds > 0) {
+				        	double entitiesPerSecond = totalRowsGenerated / elapsedSeconds;
+				        	timestampLastLog = timestampNow;
+				        	//logger.warn("generating "+((int)entitiesPerSecond)+" rows per second");
+				        	msg = msg + " ("+(int)entitiesPerSecond+"/s)";
+			        	}
+		        	}
+	        		exec.setProgress( ((double)i+1.0) / countToSample, msg);
 	        	}
 	            
 	        	// TODO draw several individuals a time ?
@@ -204,11 +270,12 @@ public class SampleFromBNNodeModel extends NodeModel {
 	        			);
 	        	
 	        	exec.checkCanceled();
-	        	
+	        
 	        }
-	    	
+	    		
 	        // once we are done, we close the container and return its table
 	        container.close();
+	        */
 	        
 			return container.getTable();
 		}
@@ -261,10 +328,6 @@ public class SampleFromBNNodeModel extends NodeModel {
         final RandomEngine random = new MersenneTwister(seed);
         exec.checkCanceled();
 
-        exec.setMessage("preparation of the inference engine");
-    	logger.info("using the Simple Conditioning Inference Engine");
-        exec.checkCanceled();
-        
         // prepare parallel processing
         int threadsToUse = 1;
         {
@@ -279,8 +342,7 @@ public class SampleFromBNNodeModel extends NodeModel {
         }
     	
         exec.setProgress(0, "generating rows");
-    	InferencePerformanceUtils.singleton.reset();
-    	
+        
     	// submit the execution of the threads
         exec.setMessage("sampling");
         List<BNToTableSampler> samplers = new ArrayList<SampleFromBNNodeModel.BNToTableSampler>(threadsToUse);
@@ -292,8 +354,7 @@ public class SampleFromBNNodeModel extends NodeModel {
 	        	countRemaining -= count;
 	        	samplers.add(
 	        			new BNToTableSampler(
-	        					new MersenneTwister(random.nextInt()), 
-	        					bn, outputSpec, 
+	        					random, bn, outputSpec, 
 	        					exec.createSubExecutionContext(0.9/threadsToUse), 
 	        					count,
 	        					countDistributed
@@ -314,8 +375,9 @@ public class SampleFromBNNodeModel extends NodeModel {
         // submit executions
     	ExecutorService executorService = Executors.newFixedThreadPool(threadsToUse);
     	totalRowsGenerated = 0;
+    	timestampStart = System.currentTimeMillis();
     	List<Future<BufferedDataTable>> results = executorService.invokeAll(samplers);
-    	executorService.shutdown();
+        
         exec.checkCanceled();
         
         // merge
@@ -339,6 +401,7 @@ public class SampleFromBNNodeModel extends NodeModel {
         return new BufferedDataTable[]{ resTable };
         
 	}
+        
 
     /**
      * {@inheritDoc}
