@@ -33,6 +33,8 @@
         <option name="Samples">How many lines to sample (generate)</option>
         <option name="Seed">Enables you to freeze the Random Number Generator used to sample. 
         If you do not understand what this means, keep it unchecked so a different result is produced at every run.</option>
+        <option name="group similar rows">If several rows are similar, grouping will add a column count and indicate the count there; 
+        else one row will be created for each result</option>
         
         
     </fullDescription>

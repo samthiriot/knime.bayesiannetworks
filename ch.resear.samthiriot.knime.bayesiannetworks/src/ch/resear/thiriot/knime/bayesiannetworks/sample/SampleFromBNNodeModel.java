@@ -87,6 +87,8 @@ public class SampleFromBNNodeModel extends NodeModel {
     				(int)System.currentTimeMillis(), 
     				false);
     
+    private final SettingsModelBoolean m_groupRows = new SettingsModelBoolean("m_grouprows", true);
+    
     private final SettingsModelBoolean m_threadsAuto = new SettingsModelBoolean(
     		"m_threads_auto", 
     		true);
@@ -124,7 +126,8 @@ public class SampleFromBNNodeModel extends NodeModel {
     		specs.add(node2mapper.get(node).getSpecForNode());
     	}
     	
-    	specs.add(new DataColumnSpecCreator("count", IntCell.TYPE).createSpec());
+    	if (m_groupRows.getBooleanValue())
+    		specs.add(new DataColumnSpecCreator("count", IntCell.TYPE).createSpec());
     	
     	return specs.toArray(new DataColumnSpec[specs.size()]);
     }
@@ -139,7 +142,7 @@ public class SampleFromBNNodeModel extends NodeModel {
     
     private long totalRowsGenerated = 0;
     private long timestampStart = 0;
-    private long timestampLastLog = 0; 
+    private boolean groupRows = false;
     
     private class BNToTableSampler implements Callable<BufferedDataTable> {
 
@@ -175,7 +178,6 @@ public class SampleFromBNNodeModel extends NodeModel {
 	        RecursiveSamplingIterator it = new RecursiveSamplingIterator(countToSample, bn, random, exec);
 	        int done = 0;
 	        int rows = 0;
-	        long timestampStart = System.currentTimeMillis();
 	        while (it.hasNext()) {
 	        	
 	        	String msg = "sampling entity "+done;
@@ -184,7 +186,6 @@ public class SampleFromBNNodeModel extends NodeModel {
 		        	long elapsedSeconds = (timestampNow - timestampStart)/1000;
 		        	if (elapsedSeconds > 10) {
 			        	double entitiesPerSecond = totalRowsGenerated / elapsedSeconds;
-			        	timestampLastLog = timestampNow;
 			        	//logger.warn("generating "+((int)entitiesPerSecond)+" rows per second");
 			        	msg = msg + " ("+(int)entitiesPerSecond+"/s)";
 		        	}
@@ -199,25 +200,41 @@ public class SampleFromBNNodeModel extends NodeModel {
 	        	
 	        	//System.out.println(next);
 	        	
-	        	// convert to KNIME cells
-	        	DataCell[] results = new DataCell[next.node2value.size()+1];
-	        	int j=0;
-	        	for (NodeCategorical node : bn.enumerateNodes()) {
-	        		
-	        		String valueStr = next.node2value.get(node);
-	        		
-	        		results[j++] = node2mapper.get(node).createCellForStringValue(valueStr);
-	        		
+	        	if (groupRows) {
+		        	// convert to KNIME cells
+		        	DataCell[] results = new DataCell[next.node2value.size()+1];
+		        	int j=0;
+		        	for (NodeCategorical node : bn.enumerateNodes()) {
+		        		String valueStr = next.node2value.get(node);
+		        		results[j++] = node2mapper.get(node).createCellForStringValue(valueStr);
+		        	}
+		        	results[j] = IntCellFactory.create(next.count);
+		        	
+		        	// append
+		        	container.addRowToTable(
+		        			new DefaultRow(
+			        			new RowKey("Row " + (firstId + rows++) ), 
+			        			results
+			        			)
+		        			);
+	        	} else {
+	        		// convert to KNIME cells
+		        	DataCell[] results = new DataCell[next.node2value.size()];
+		        	int j=0;
+		        	for (NodeCategorical node : bn.enumerateNodes()) {
+		        		String valueStr = next.node2value.get(node);
+		        		results[j++] = node2mapper.get(node).createCellForStringValue(valueStr);
+		        	}
+		        	for (int i=0; i<next.count; i++) {
+			        	// append
+			        	container.addRowToTable(
+			        			new DefaultRow(
+				        			new RowKey("Row " + (firstId + rows++) ), 
+				        			results
+				        			)
+			        			);
+		        	}
 	        	}
-	        	results[j] = IntCellFactory.create(next.count);
-	        	
-	        	// append
-	        	container.addRowToTable(
-	        			new DefaultRow(
-		        			new RowKey("Row " + (firstId + rows++) ), 
-		        			results
-		        			)
-	        			);
 	        	exec.checkCanceled();
 	        }
 	        
@@ -305,7 +322,8 @@ public class SampleFromBNNodeModel extends NodeModel {
     	
     	// retrieve parameter
     	final int countToSample = m_count.getIntValue();
-        
+    	groupRows = m_groupRows.getBooleanValue();
+    	
         // retrieve the seed
     	int seed; 
     	if (m_seed.getIsActive()) {
@@ -419,14 +437,14 @@ public class SampleFromBNNodeModel extends NodeModel {
      */
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
-
-        // TODO save user settings to the config object.
         
         m_count.saveSettingsTo(settings);
         m_seed.saveSettingsTo(settings);
         
         m_threads.saveSettingsTo(settings);
         m_threadsAuto.saveSettingsTo(settings);
+        
+        m_groupRows.saveSettingsTo(settings);
     }
 
     /**
@@ -441,6 +459,8 @@ public class SampleFromBNNodeModel extends NodeModel {
         
         m_threads.loadSettingsFrom(settings);
         m_threadsAuto.loadSettingsFrom(settings);
+        
+        m_groupRows.loadSettingsFrom(settings);
     }
 
     /**
@@ -455,6 +475,8 @@ public class SampleFromBNNodeModel extends NodeModel {
         
         m_threads.validateSettings(settings);
         m_threadsAuto.validateSettings(settings);
+        
+        m_groupRows.validateSettings(settings);
     }
     
     /**

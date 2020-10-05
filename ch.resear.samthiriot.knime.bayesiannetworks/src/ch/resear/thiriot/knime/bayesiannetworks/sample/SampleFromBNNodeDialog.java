@@ -47,6 +47,9 @@ public class SampleFromBNNodeDialog extends DefaultNodeSettingsPane {
         	    "seed"
         	    ));
         
+
+        addDialogComponent(new DialogComponentBoolean(new SettingsModelBoolean("m_grouprows", true), "group similar raws"));
+
         SettingsModelBoolean m_threadsAuto = new SettingsModelBoolean(
         		"m_threads_auto", 
         		true);
