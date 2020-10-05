@@ -38,6 +38,8 @@ public final class NodeCategorical extends FiniteNode<NodeCategorical> {
 
 	protected final CategoricalBayesianNetwork cNetwork;
 	
+	private int cachedParentsCardinality = -1;
+
 	/**
 	 * Returns a human readible repreentation of a domain, assuming that displaying more than 20 values
 	 * does not make sense.
@@ -96,12 +98,21 @@ public final class NodeCategorical extends FiniteNode<NodeCategorical> {
 		return parents.stream().mapToInt(NodeCategorical::getDomainSize).reduce(1, Math::multiplyExact);
 	}
 	
+	@Override
+	public void addDomain(String vv) {
+		super.addDomain(vv);
+		cachedParentsCardinality = -1;
+	}
+	
+	
 	/**
 	 * returns the number of values, aka size of CPT
 	 * @return
 	 */
 	public int getCardinality() {
-		return domain.size()*getParentsCardinality();
+		if (cachedParentsCardinality < 0)
+			cachedParentsCardinality = domain.size()*getParentsCardinality();
+		return cachedParentsCardinality;
 	}
 	
 	@Override
@@ -111,6 +122,7 @@ public final class NodeCategorical extends FiniteNode<NodeCategorical> {
 		parentsArray[parentsArray.length-1] = parent;
 		adaptContentSize();
 		parent2index.put(parent, parent2index.size());
+		cachedParentsCardinality = -1; // reset cache
 	}
 
 
@@ -393,7 +405,8 @@ public final class NodeCategorical extends FiniteNode<NodeCategorical> {
 		// 1,2,3
 		
 		double res = 0.;
-		for (int nb=0; nb<getParentsCardinality();nb++) {
+		int card = getParentsCardinality();
+		for (int nb=0; nb<card;nb++) {
 			
 			// shift next
 			int[] idxParents = new int[parents.size()];
@@ -410,10 +423,11 @@ public final class NodeCategorical extends FiniteNode<NodeCategorical> {
 				idxParents[cursorParents]++;
 				
 			res += getProbability(idxAtt, idxParents);
-			InferencePerformanceUtils.singleton.incAdditions();
-			
+
 		}
-	
+		InferencePerformanceUtils.singleton.incAdditions(card);
+		
+
 		// TODO reactivate logger.trace("computed conditional probability p({}={})={}", name, att, res);
 
 		return res;

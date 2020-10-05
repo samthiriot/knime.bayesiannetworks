@@ -294,6 +294,9 @@ public class EnumerateBNNodeModel extends NodeModel {
     		// so the best is to always start with the table having the highest count of zero
     		// so we will first compute the probabilities of the tables having most zeros so we 
     		// quickly drop combinations leading to 0
+    		
+    		// TODO can be replace with bn.enumerateVariablesPerZeros()
+    		
     		nodeOrderForBest.sort(new Comparator<NodeCategorical>() {
 	
 				@Override

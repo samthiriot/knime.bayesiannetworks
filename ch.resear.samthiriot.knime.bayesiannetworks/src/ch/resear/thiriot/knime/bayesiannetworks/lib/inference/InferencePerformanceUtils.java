@@ -47,6 +47,10 @@ public class InferencePerformanceUtils {
 		countAdditions++;
 	}
 	
+	public void incAdditions(int count) {
+		countAdditions += count;
+	}
+	
 	public void incMultiplications() {
 		countMultiply++;
 	}

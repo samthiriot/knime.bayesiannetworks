@@ -138,7 +138,6 @@ public class SampleFromBNNodeModel extends NodeModel {
     
     private class BNToTableSampler implements Callable<BufferedDataTable> {
 
-    	private final RandomEngine random;
     	private final AbstractInferenceEngine engine;
     	private final DataTableSpec outputSpec;
     	private final ExecutionContext exec;
@@ -159,16 +158,9 @@ public class SampleFromBNNodeModel extends NodeModel {
     		this.countToSample = countToSample;
     		this.bn = bn;
     		this.firstId = firstId;
-    		
-    		this.random = new MersenneTwister(_random.nextInt());
-            
+    	            
     		this.engine = new SimpleConditionningInferenceEngine(ilogger, _random, bn);
     		
-    		/*
-    		this.engine = new SimpleConditionningInferenceEngine(
-            		ilogger, 
-            		random,
-            		bn);*/
     	}
     	
 		@Override
@@ -179,13 +171,13 @@ public class SampleFromBNNodeModel extends NodeModel {
 	            
 	        	totalRowsGenerated++;
 	        	
-	        	if (totalRowsGenerated%7==0)
+	        	if (totalRowsGenerated % 7 == 0) {
 	        		exec.setMessage("row "+totalRowsGenerated);
-	        	
-	        	exec.setProgress(
-	            		((double)i+1.0) / countToSample//, 
-	            		//"Adding row " + i
-	            		);
+		        	exec.setProgress(
+		            		((double)i+1.0) / countToSample//, 
+		            		//"Adding row " + i
+		            		);
+	        	}
 	            
 	        	// TODO draw several individuals a time ?
 	        	
@@ -300,7 +292,8 @@ public class SampleFromBNNodeModel extends NodeModel {
 	        	countRemaining -= count;
 	        	samplers.add(
 	        			new BNToTableSampler(
-	        					random, bn, outputSpec, 
+	        					new MersenneTwister(random.nextInt()), 
+	        					bn, outputSpec, 
 	        					exec.createSubExecutionContext(0.9/threadsToUse), 
 	        					count,
 	        					countDistributed
@@ -322,7 +315,7 @@ public class SampleFromBNNodeModel extends NodeModel {
     	ExecutorService executorService = Executors.newFixedThreadPool(threadsToUse);
     	totalRowsGenerated = 0;
     	List<Future<BufferedDataTable>> results = executorService.invokeAll(samplers);
-        
+    	executorService.shutdown();
         exec.checkCanceled();
         
         // merge

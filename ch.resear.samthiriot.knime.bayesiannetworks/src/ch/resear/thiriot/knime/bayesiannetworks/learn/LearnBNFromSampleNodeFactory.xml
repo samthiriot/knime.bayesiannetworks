@@ -12,21 +12,19 @@
     </shortDescription>
     
     <fullDescription>
-        <intro>Insert long description here...</intro>
+        <intro>
+        For a given Bayesian network, learns the conditional probabilities from a given sample.
+        <br />
+        In practice, it is often recommanded to add a constant of +1 to the measured counts. 
+		This reduces the problem of zero cells, in which zero cells might happen because the sample
+		was to small, not because it is structurally impossible to see the case in reality.
+		This also smoothes the sampling effect in general. 
+		Yet it also adds a bias in the measure.
+        You might add such a constant using the smoothing constant parameter which 
+        is defined by default at 0.
+        </intro>
         
-        
-        <option name="short name of first option (like in the dialog)">description of first option</option>
-        <option name="short name of second option (like in the dialog)">description of second option</option>
-        <!-- possibly more options that can also be grouped by tabs -->
-        <!--
-        <tab name="Standard Options">
-            <option name="short name of first option (like in the dialog)">description of first option</option>
-            <option name="short name of second option (like in the dialog)">description of second option</option>
-        </tab>
-        <tab name="Advanced Options">
-            <option name="short name of first advanced option (like in the dialog)">description of first advanced option</option>
-        </tab>
-        -->
+        <option name="Smoothing constant">constant to add to the count found in the actual sample (default to 0)</option>
     </fullDescription>
     
     <ports>

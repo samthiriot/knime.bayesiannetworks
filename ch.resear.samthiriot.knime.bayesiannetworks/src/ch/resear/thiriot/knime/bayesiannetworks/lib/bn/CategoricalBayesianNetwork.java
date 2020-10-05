@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,6 +50,7 @@ public class CategoricalBayesianNetwork extends BayesianNetwork<NodeCategorical>
 	public void notifyNodesChanged() {
 		super.notifyNodesChanged();
 		node2factor.clear();
+		cacheNodesRankedPerZero = null; 
 	}
 	
 	/**
@@ -71,29 +71,52 @@ public class CategoricalBayesianNetwork extends BayesianNetwork<NodeCategorical>
 		return res;
 	}
 
+	List<NodeCategorical> cacheNodesRankedPerZero = null;
+	public List<NodeCategorical> enumerateVariablesPerZeros() {
+		
+		if (cacheNodesRankedPerZero != null)
+			return cacheNodesRankedPerZero;
+
+		cacheNodesRankedPerZero = rankVariablesPerZeros(getNodes());
+
+		return cacheNodesRankedPerZero;
+	}
+		
 	/**
 	 * ranks the nodes per count of zeros in the CPT 
 	 * @param all
 	 * @return
 	 */
+	
 	protected List<NodeCategorical> rankVariablesPerZeros(Collection<NodeCategorical> all) {
-		
+	
+
 		//logger.info("should rank variables {}", all);
 		List<NodeCategorical> res = new ArrayList<>(all);
 		
-		Collections.sort(res, new Comparator<NodeCategorical>() {
-
-			@Override
-			public int compare(NodeCategorical n1, NodeCategorical n2) {
-				
-				return n2.getCountOfZeros() - n1.getCountOfZeros();
-
-			}
+		Map<NodeCategorical,Double> node2proportionZeros = res.stream().collect(
+				Collectors.toMap(
+	    				n -> n, 
+	    				n -> (double)n.getCountOfZeros()/n.getCardinality() ));
+		
+		res.sort(new Comparator<NodeCategorical>() {
 			
+			@Override
+			public int compare(NodeCategorical o1, NodeCategorical o2) {
+				Double proportionOfZeros1 = node2proportionZeros.get(o1);
+				Double proportionOfZeros2 = node2proportionZeros.get(o2);
+				// first compare on the proportion of zeros: the higher the better
+				int r = - proportionOfZeros1.compareTo(proportionOfZeros2);
+				// then, if equal, compare on size (why?)
+				if (r==0)
+					r = o1.getCardinality()-o2.getCardinality();
+				return r;
+			}
+    		
 		});
 		
 		//logger.info("ranked variables {}", res);
-		
+
 		return res;
 	}
 
@@ -343,7 +366,7 @@ public class CategoricalBayesianNetwork extends BayesianNetwork<NodeCategorical>
 				
 		Factor f = null;
 		
-		for (NodeCategorical n: enumerateNodes()) {
+		for (NodeCategorical n: enumerateVariablesPerZeros()) {
 			Factor fn = n.asFactor();
 			if (f == null)
 				f = fn;
@@ -399,5 +422,6 @@ public class CategoricalBayesianNetwork extends BayesianNetwork<NodeCategorical>
 		return n2s;
 	}	
 	
+
 
 }

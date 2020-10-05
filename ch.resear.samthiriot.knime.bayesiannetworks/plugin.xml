@@ -108,6 +108,10 @@
       category-path="/community/bayesiannet/sample"
       factory-class="ch.resear.thiriot.knime.bayesiannetworks.computeproba.ComputeProbaNodeFactory">
 </node>
+<node
+      category-path="/community/bayesiannet"
+      factory-class="ch.resear.thiriot.knime.bayesiannetworks.diff.DiffBNNodeFactory">
+</node>
 
    </extension>
    

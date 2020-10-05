@@ -473,7 +473,7 @@ public class TestInferenceEnginesOnData {
 		ie.clearEvidence();
 		InferencePerformanceUtils.singleton.reset();
 		
-		for (int i=0; i<100; i++) {
+		for (int i=0; i<1000; i++) {
 			Map<NodeCategorical,String> node2attribute = ie.sampleOne();
 			
 			// we finished an individual

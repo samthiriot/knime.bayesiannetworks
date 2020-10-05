@@ -31,7 +31,7 @@ public abstract class FiniteNode<N extends AbstractNode<N>> extends AbstractNode
 	 * and adapts the internal size for the content (thus loosing any data there before)
 	 * @param vv
 	 */
-	public final void addDomain(String vv) {
+	public void addDomain(String vv) {
 		if (domain2index.containsKey(vv)) {
 			throw new IllegalArgumentException(vv+" is already part of the domain");
 		}

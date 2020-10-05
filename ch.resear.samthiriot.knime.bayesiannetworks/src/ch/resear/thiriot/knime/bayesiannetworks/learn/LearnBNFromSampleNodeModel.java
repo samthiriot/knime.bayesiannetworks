@@ -21,6 +21,7 @@ import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
@@ -48,7 +49,10 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
             .getLogger(LearnBNFromSampleNodeModel.class);
     private static final ILogger ilogger = new LogIntoNodeLogger(logger);
 
-
+    private SettingsModelIntegerBounded m_constant = new SettingsModelIntegerBounded(
+    		"m_addconstant", 0, 
+    		0, 1000);
+    
     /**
      * Constructor for the node model.
      */
@@ -87,9 +91,8 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     	final BufferedDataTable sample = sampleRead;
     	
     	
-    	// no parameter to retrieve
-    	
-    	
+    	// retrieve parameters
+    	final int constantToAdd = m_constant.getIntValue();
     	
     	// the future result
     	CategoricalBayesianNetwork learnt = bn.clone();
@@ -154,7 +157,7 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     		
     		for (String value : n.getDomain()) {
     			//String value = valueRaw.toLowerCase();
-    			System.out.println("studying "+n.getName()+"="+value);
+    			//System.out.println("studying "+n.getName()+"="+value);
     			Map<Map<NodeCategorical,String>,Integer> coordinates2count = new HashMap<>();
     			IteratorCategoricalVariables itDomains = learnt.iterateDomains(n.getParents());
     			while (itDomains.hasNext()) {
@@ -164,7 +167,7 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     								entry -> entry.getValue())
     						);
     				coordinates2count.put(coord, 0);
-    				System.out.println("\t"+coord);
+    				//System.out.println("\t"+coord);
     			}
     			value2coordinates2count.put(value, coordinates2count);
     			
@@ -229,7 +232,7 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
 	    			Integer previousCount = node2value2coordinates2count.get(nodeToLearn).get(value).get(coordinate);
 	    			node2value2coordinates2count.get(nodeToLearn).get(value).put(coordinate, previousCount+1);
 	    			
-	    			System.out.println(nodeToLearn.getName()+"="+value+" | "+coordinate+" => "+(previousCount+1));
+	    			//System.out.println(nodeToLearn.getName()+"="+value+" | "+coordinate+" => "+(previousCount+1));
     			} catch (NullPointerException e) {
     				// the content of columns does not fit the domains of the nodes !!!
     				logger.error(
@@ -241,11 +244,11 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     			}
     		}
     		
-    		if (i % 100 == 0) { // TODO granularity?
+    		if (i % 10 == 0) { // TODO granularity?
 	            // check if the execution monitor was canceled
 	            exec.checkCanceled();
 	            exec.setProgress(
-	            		(double)i / sample.size(), 
+	            		0.7 * (double)i / sample.size(), 
 	            		"reading sample " + i);
         	}
     		i++;
@@ -256,12 +259,20 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     		nodesToLearn.removeAll(failedNodes);
     	}
     	
+    	exec.setProgress("aggregating statistics");
+    	
     	Set<String> warnings = new HashSet<>();
     	
+    	int n = 0;
     	for (NodeCategorical node: nodesToLearn) {
-    		
+
+            exec.checkCanceled();
+            exec.setProgress(
+            		0.7 + 0.3 * (double)n++ / nodesToLearn.size(), 
+            		"aggregating statistics for " + node.name);
+            
     		// count all the measures for this 
-    		int total = node2value2coordinates2count.get(node).values()
+    		/*int total = node2value2coordinates2count.get(node).values()
     							.stream()
     							.mapToInt( coordinates2count -> coordinates2count.values()
     															.stream()
@@ -270,7 +281,8 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     							.sum();
     		
     		System.out.println(node.getName()+": total "+total);
-    		
+    		*/
+            
     		for (String value: node.getDomain()) {
     			
     			//String value = valueRaw.toLowerCase();
@@ -288,13 +300,13 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
         		//System.out.println(node.getName()+"="+value+": total "+totalValue);
         		
         		
-    			System.out.println("parents: "+node.getParents());
+    			//System.out.println("parents: "+node.getParents());
     			IteratorCategoricalVariables itDomains = learnt.iterateDomains(node.getParents());
     			while (itDomains.hasNext()) {
     				
     				Map<NodeCategorical,String> coord = itDomains.next();
     				
-    				System.out.println("coord: "+coord);
+    				//System.out.println("coord: "+coord);
     				
     				Map<NodeCategorical,String> coordLower = coord.entrySet().stream().collect(
     						Collectors.toMap(
@@ -304,13 +316,13 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     						);
     				
     				int totalValue = node.getDomain().stream()
-		    				.mapToInt( val -> node2value2coordinates2count.get(node).get(val).get(coord) )
+		    				.mapToInt( val -> node2value2coordinates2count.get(node).get(val).get(coord) + constantToAdd)
 		    				.sum();
 	
     				double p;
     				
-    				if (totalValue == 0) {
-    					p = 0;
+    				if (totalValue == constantToAdd * node.getDomainSize()) {
+    					//p = 0;
     					
     					warnings.add("there is no data for the case "+coord+"; will assume equiprobability");
     					
@@ -320,18 +332,20 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     				} else {
 	
 	    				
-	    				int countForCoord = node2value2coordinates2count.get(node).get(value).get(coord);
+	    				int countForCoord = node2value2coordinates2count.get(node).get(value).get(coord) + constantToAdd;
 	    				// / node.getDomainSize()
 	    				p = (double)countForCoord / totalValue; // * node.getParentsDimensionality(); // totalValue
-	    				System.out.println(node.getName()+"="+value+" | "+coord+" => "+countForCoord+"/"+totalValue+" => "+p);
+	    				//System.out.println(node.getName()+"="+value+" | "+coord+" => "+countForCoord+"/"+totalValue+" => "+p);
 
     				}
     				
-
     				try {
+    					double previous = node.getProbability(value, 
+								coordLower);
     					node.setProbabilities(p, 
 											value, 
 											coordLower);
+    					System.out.println("setting "+node.getName()+"="+value+" | "+coord+" = "+p+" (instead of "+previous+")");
     				} catch (IllegalArgumentException e) {
     					e.printStackTrace();
     					throw e;
@@ -341,14 +355,15 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     			
     		}
     		
-    		// TODO not implemented o_O
-    		//node.normalize();
+    		node.normalize();
     		
-        	System.err.println(node.collectInvalidityReasons());
+        	//System.err.println(node.collectInvalidityReasons());
 
     		System.out.println(node.asFactor().toStringLong());
     	}
     	
+    	exec.checkCanceled();
+    	exec.setMessage("processing warnings");
     	
     	for (String warn: warnings) {
     		logger.warn(warn);
@@ -370,9 +385,6 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
      */
     @Override
     protected void reset() {
-        // TODO Code executed on reset.
-        // Models build during execute are cleared here.
-        // Also data handled in load/saveInternals will be erased here.
     }
 
 
@@ -387,6 +399,7 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
 
+    	m_constant.saveSettingsTo(settings);
     }
 
     /**
@@ -395,7 +408,8 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
-            
+           
+    	m_constant.loadSettingsFrom(settings);
     
     }
 
@@ -405,7 +419,8 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     @Override
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
-            
+           
+    	m_constant.validateSettings(settings);
 
     }
     
@@ -417,13 +432,6 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
             final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         
-        // TODO load internal data. 
-        // Everything handed to output ports is loaded automatically (data
-        // returned by the execute method, models loaded in loadModelContent,
-        // and user settings set through loadSettingsFrom - is all taken care 
-        // of). Load here only the other internals that need to be restored
-        // (e.g. data used by the views).
-
     }
     
     /**
@@ -434,12 +442,6 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
             final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
        
-        // TODO save internal models. 
-        // Everything written to output ports is saved automatically (data
-        // returned by the execute method, models saved in the saveModelContent,
-        // and user settings saved through saveSettingsTo - is all taken care 
-        // of). Save here only the other internals that need to be preserved
-        // (e.g. data used by the views).
 
     }
 

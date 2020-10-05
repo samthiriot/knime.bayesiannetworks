@@ -1,24 +1,24 @@
-package ch.resear.thiriot.knime.bayesiannetworks.learn;
+package ch.resear.thiriot.knime.bayesiannetworks.diff;
 
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeFactory;
 import org.knime.core.node.NodeView;
 
 /**
- * <code>NodeFactory</code> for the "LearnBNFromSample" Node.
- * For a given Bayesian network, learns the conditional probabilities from a given sample
+ * <code>NodeFactory</code> for the "BNXMLNBIFWriterNode" Node.
+ * Writes the Bayesian network into an XML BIF file.
  *
  * @author Samuel Thiriot
  */
-public class LearnBNFromSampleNodeFactory 
-        extends NodeFactory<LearnBNFromSampleNodeModel> {
+public class DiffBNNodeFactory 
+        extends NodeFactory<DiffBNNodeModel> {
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public LearnBNFromSampleNodeModel createNodeModel() {
-        return new LearnBNFromSampleNodeModel();
+    public DiffBNNodeModel createNodeModel() {
+        return new DiffBNNodeModel();
     }
 
     /**
@@ -33,8 +33,8 @@ public class LearnBNFromSampleNodeFactory
      * {@inheritDoc}
      */
     @Override
-    public NodeView<LearnBNFromSampleNodeModel> createNodeView(final int viewIndex,
-            final LearnBNFromSampleNodeModel nodeModel) {
+    public NodeView<DiffBNNodeModel> createNodeView(final int viewIndex,
+            final DiffBNNodeModel nodeModel) {
         return null;
     }
 
@@ -51,7 +51,7 @@ public class LearnBNFromSampleNodeFactory
      */
     @Override
     public NodeDialogPane createNodeDialogPane() {
-        return new LearnBNFromSampleNodeDialog();
+        return new DiffBNNodeDialog();
     }
 
 }

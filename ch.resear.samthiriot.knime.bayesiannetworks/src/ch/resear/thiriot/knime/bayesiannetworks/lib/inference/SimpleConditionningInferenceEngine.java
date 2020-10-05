@@ -51,20 +51,23 @@ public class SimpleConditionningInferenceEngine extends AbstractInferenceEngine 
 	
 	private LRUMap<Map<NodeCategorical,String>,Map<Set<NodeCategorical>,Double>> known2nuisance2value = null;
 	private LRUMap<Map<NodeCategorical,String>,Double> evidence2proba = null;
-	
+
+	final boolean debug;
+
 	public SimpleConditionningInferenceEngine(
 			ILogger logger, 
 			RandomEngine random,
 			CategoricalBayesianNetwork bn) {
 		super(logger, random, bn);
 
+		debug = logger.isDebugEnabled();
 	}
 
 
 	@Override
 	protected double retrieveConditionalProbability(NodeCategorical n, String s) {
-		
-		if (logger.isDebugEnabled())
+			
+		if (debug)
 			logger.debug("p("+n.name+"="+s+"|"+evidenceVariable2value);
 
 		// can we even compute it ? 
@@ -107,7 +110,7 @@ public class SimpleConditionningInferenceEngine extends AbstractInferenceEngine 
 		}
 		if (known == done.length-1) {
 			// we know all the values but one
-			if (logger.isDebugEnabled())
+			if (debug)
 				logger.debug("we can save one computation here by doing p(X=x)=1 - sum(p(X=^x))");
 			double total = 1.;
 			for (double d : done) {
@@ -116,13 +119,13 @@ public class SimpleConditionningInferenceEngine extends AbstractInferenceEngine 
 			}
 			res = total;
 		} else {
-			if (logger.isDebugEnabled())
+			if (debug)
 				logger.debug("no value computed for p("+n.name+"="+s+"|"+evidenceVariable2value+"), starting computation...");
 			//res = n.getConditionalProbabilityPosterior(s, variable2value, computed);
 			res = computePosteriorConditionalProbability(n, s, evidenceVariable2value);
 		}
 		done[n.getDomainIndex(s)] = res;
-		if (logger.isDebugEnabled())
+		if (debug)
 			logger.debug("returning p("+n.name+"="+s+"|"+evidenceVariable2value+")="+res);
 
 		return res;
@@ -167,7 +170,7 @@ public class SimpleConditionningInferenceEngine extends AbstractInferenceEngine 
 			
 			computed.put(n, done);
 		}
-		if (logger.isDebugEnabled())
+		if (debug)
 			logger.debug("returning p("+n.name+"=*|"+evidenceVariable2value+") : "+done);
 
 		return done;
@@ -181,7 +184,7 @@ public class SimpleConditionningInferenceEngine extends AbstractInferenceEngine 
 	 */
 	protected Set<NodeCategorical> getLeaf(Set<NodeCategorical> nodes) {
 		
-		if (logger.isDebugEnabled())
+		if (debug)
 			logger.debug("searching for the leafs of " + nodes);
 		
 		Set<NodeCategorical> leafs = new HashSet<>(nodes);
@@ -190,7 +193,7 @@ public class SimpleConditionningInferenceEngine extends AbstractInferenceEngine 
 			leafs.removeAll(n.getParents());
 		}
 		
-		if (logger.isDebugEnabled()) 
+		if (debug) 
 			logger.debug("leafs of "+nodes+" are " + leafs);
 
 		return leafs;
@@ -253,10 +256,9 @@ public class SimpleConditionningInferenceEngine extends AbstractInferenceEngine 
 		if (res != null)
 			return res;
 		
-		
 		res = 0.;
 					
-		if (logger.isDebugEnabled())
+		if (debug)
 			logger.debug("summing probabilities for nuisance "+known+", and known "+nuisanceS);
 
 		for (IteratorCategoricalVariables it = bn.iterateDomains(nuisanceS); it.hasNext(); ) {
@@ -266,7 +268,7 @@ public class SimpleConditionningInferenceEngine extends AbstractInferenceEngine 
 			
 			double p = this.bn.jointProbability(n2v, Collections.emptyMap());
 			
-			if (logger.isDebugEnabled())
+			if (debug)
 				logger.debug("p("+n2v+")="+p);
 			
 			res += p;
@@ -280,10 +282,9 @@ public class SimpleConditionningInferenceEngine extends AbstractInferenceEngine 
 
 		}
 		
-		
 		storeCache(known, nuisanceS, res);
 		
-		if (logger.isDebugEnabled())
+		if (debug)
 			logger.debug("total " + res);
 		return res;
 	}
@@ -299,15 +300,16 @@ public class SimpleConditionningInferenceEngine extends AbstractInferenceEngine 
 	protected double[] computePosteriorConditionalProbability(
 											NodeCategorical n, 
 											Map<NodeCategorical,String> evidence) {
-		
-		double[] v2p = new double[n.getDomainSize()];
+		final int domainSize = n.getDomainSize();
+
+		double[] v2p = new double[domainSize];
 
 		double pFree = getProbabilityEvidence(); // this.sumProbabilities(evidence, selectRelevantVariables((NodeCategorical)null, evidence, bn.nodes)); // optimisation: elimination of irrelevant variables
 
-		for (int i=0; i<n.getDomainSize(); i++) {
+		for (int i=0; i<domainSize; i++) {
 			String nv = n.getValueIndexed(i);
 		
-			if (logger.isDebugEnabled())
+			if (debug)
 				logger.debug("computing p(*=*|"+n.name+"="+nv+")");
 							
 			Map<NodeCategorical,String> punctualEvidence = new HashMap<>(evidence);
@@ -318,7 +320,7 @@ public class SimpleConditionningInferenceEngine extends AbstractInferenceEngine 
 					selectRelevantVariables(n, evidence, bn.nodes) // optimisation: elimination of irrelevant variables
 					);
 						
-			if (logger.isDebugEnabled()) {
+			if (debug) {
 				logger.debug("computed p("+n.name+"="+nv+"|"+punctualEvidence+","+n.name+"="+nv+")="+p);
 				logger.debug("computed p(*=*|"+n.name+"="+nv+")="+p);
 			}
@@ -326,16 +328,17 @@ public class SimpleConditionningInferenceEngine extends AbstractInferenceEngine 
 			
 		}
 		
-		logger.debug("now computing the overall probas");
+		if (debug)
+			logger.debug("now computing the overall probas");
 
-		for (int i=0; i<n.getDomainSize(); i++) {
+		for (int i=0; i<domainSize; i++) {
 			String nv = n.getValueIndexed(i);
 
 			double p = v2p[i];
 			
 			double pp = p / pFree;
 			v2p[i] = pp;
-			if (logger.isDebugEnabled())
+			if (debug)
 				logger.debug("computed p({"+n.name+"="+nv+"|evidence)= p("+n.name+"="+nv+"|evidence)/p("+n.name+"|evidence)="+p+"/"+pFree+"="+pp);
 		}
 		
@@ -363,7 +366,7 @@ public class SimpleConditionningInferenceEngine extends AbstractInferenceEngine 
 						evidence, 
 						bn.nodes)); // optimisation: elimination of irrelevant variables
 
-		if (logger.isDebugEnabled())
+		if (debug)
 			logger.debug("computing p(*=*|"+n.name+"="+nv+")");
 						
 		Map<NodeCategorical,String> punctualEvidence = new HashMap<>(evidence);
@@ -374,7 +377,7 @@ public class SimpleConditionningInferenceEngine extends AbstractInferenceEngine 
 				selectRelevantVariables(n, evidence, bn.nodes) // optimisation: elimination of irrelevant variables
 				);
 			
-		if (logger.isDebugEnabled()) {
+		if (debug) {
 			logger.debug("computed p("+n.name+"="+nv+"|"+punctualEvidence+","+n.name+"="+nv+")="+p);
 			
 			logger.debug("computed p(*=*|"+n.name+"="+nv+")="+p);
@@ -391,7 +394,7 @@ public class SimpleConditionningInferenceEngine extends AbstractInferenceEngine 
 		}
 		
 		
-		if (logger.isDebugEnabled())
+		if (debug)
 			logger.debug("computed p("+n.name+"="+nv+"|evidence)= p("+n.name+"="+nv+"|evidence)/p("+n.name+"|evidence)="+p+"/"+pFree+"="+pp);
 		
 		return pp;

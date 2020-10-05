@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<knimeNode icon="./bnwriter-icon.png" 
+			type="Sink" 
+			xmlns="http://knime.org/node/v2.8" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://knime.org/node/v2.10 http://knime.org/node/v2.10.xsd">
+    <name>Difference between BN</name>
+    
+    <shortDescription>
+        Measures the difference between two Bayesian networks
+    </shortDescription>
+    
+    <fullDescription>
+        <intro>
+        Measures the difference between two Bayesian networks.
+        The two Bayesian networks should share the same variables and the same structure.
+        For each variable, this will produce one row per variable containing the measures
+        of mean square error, count of zeros, etc. 
+        It will also produce a total row for the aggregated error. 
+		<br />
+		The Mean Square Error measures the difference between the Conditional Probability Tables of the two variables.
+        </intro>
+        
+    </fullDescription>
+    
+    <ports>
+        <inPort index="0" name="Bayesian network">Bayesian network</inPort>
+        <inPort index="1" name="Bayesian network">Bayesian network</inPort>
+		<outPort index="0" name="data table">data table containing the difference</outPort>
+    </ports> 
+</knimeNode>
