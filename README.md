@@ -25,6 +25,16 @@ Click the "Add..." button and add repository:
 
 Then select "Bayesian Networks for KNIME", and follow the usual process. 
 
-# use it
+# Use it
+
+## Read, Sample, Measure
+
+A basic case is to read an existing Bayesian network from a file and to sample entities (generate KNIME rows).
+To measure the quality of the sampling, one learns the probabilities of the Bayesian network and compare them with the reference network.
+
+![example of workflow with reading, sampling and measure of quality](./doc/screenshot_read_sample_measure.png)
+
+You can [download it](./doc/example_read_sample_measure.knwf) to try it yourself.
+
 
 
