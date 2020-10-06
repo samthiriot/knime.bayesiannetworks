@@ -94,7 +94,7 @@ public class SimpleConditionningInferenceEngine extends AbstractInferenceEngine 
 			computed.put(n, done);
 		} else {
 			double res = done[n.getDomainIndex(s)];
-			if (res > 0)
+			if (res > -1)
 				return res;
 		}
 		
@@ -103,12 +103,22 @@ public class SimpleConditionningInferenceEngine extends AbstractInferenceEngine 
 		// we did not computed this value.
 		// maybe we know everything but this one ?
 		int known = 0;
+		double cumulated = 0.0;
 		for (int i=0; i<done.length; i++) {
-			if (done[i] >= 0){ 
+			cumulated += done[i]; 
+			if (cumulated >= 1.0)
+				break;
+			if (done[i] > -1){ 
 				known++;
 			}
 		}
-		if (known == done.length-1) {
+		if (cumulated >= 1.0) {
+			// before computing this value, we already sum up to 1.0
+			// so this value = 0 !
+			if (debug)
+				logger.debug("we can save one computation here by doing p(X=x)=0 because sum(p(X=^x))>=1");
+			res = 0;
+		} else if (known == done.length-1) {
 			// we know all the values but one
 			if (debug)
 				logger.debug("we can save one computation here by doing p(X=x)=1 - sum(p(X=^x))");
@@ -118,12 +128,20 @@ public class SimpleConditionningInferenceEngine extends AbstractInferenceEngine 
 					total -= d;
 			}
 			res = total;
+			if (res < 0)
+				res = 0;
 		} else {
 			if (debug)
 				logger.debug("no value computed for p("+n.name+"="+s+"|"+evidenceVariable2value+"), starting computation...");
 			//res = n.getConditionalProbabilityPosterior(s, variable2value, computed);
 			res = computePosteriorConditionalProbability(n, s, evidenceVariable2value);
 		}
+		
+
+		if (res < 0)
+			throw new RuntimeException("negative probability computed for p("+n.name+"="+s+"|"+evidenceVariable2value+")");
+		
+		
 		done[n.getDomainIndex(s)] = res;
 		if (debug)
 			logger.debug("returning p("+n.name+"="+s+"|"+evidenceVariable2value+")="+res);

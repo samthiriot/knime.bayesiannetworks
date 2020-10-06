@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataRow;
+import org.knime.core.data.DoubleValue;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -21,6 +22,8 @@ import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
+import org.knime.core.node.defaultnodesettings.SettingsModelColumnName;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
@@ -52,6 +55,11 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     private SettingsModelIntegerBounded m_constant = new SettingsModelIntegerBounded(
     		"m_addconstant", 0, 
     		0, 1000);
+    
+    private SettingsModelBoolean m_useWeightColumn = new SettingsModelBoolean(
+    		"m_use_weight_colum", false);
+    
+    private SettingsModelColumnName m_colnameWeight = new SettingsModelColumnName("m_colname", null);
     
     /**
      * Constructor for the node model.
@@ -93,7 +101,10 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     	
     	// retrieve parameters
     	final int constantToAdd = m_constant.getIntValue();
-    	
+    	final boolean useWeightColumn = m_useWeightColumn.getBooleanValue();
+    	final String nameWeightColumn = m_colnameWeight.getColumnName();
+    	final int idxWeightColumn = sample.getDataTableSpec().findColumnIndex(nameWeightColumn);
+    			
     	// the future result
     	CategoricalBayesianNetwork learnt = bn.clone();
 
@@ -143,22 +154,22 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     	// Node "weather" = "nice" |  => 100
     	// Node "weather" = "ugly" |  => 500
     
-    	
+    	exec.setMessage("initializing counters");
     	// prepare the empty data structure
     	Map<NodeCategorical,
     		Map<String,
     			Map<Map<NodeCategorical,
     					String>,
-    				Integer>>> node2value2coordinates2count = new HashMap<>();
+    					Double>>> node2value2coordinates2count = new HashMap<>();
     	
     	for (NodeCategorical n: nodesToLearn) {
     		
-    		Map<String,Map<Map<NodeCategorical,String>,Integer>> value2coordinates2count = new HashMap<>();
+    		Map<String,Map<Map<NodeCategorical,String>,Double>> value2coordinates2count = new HashMap<>();
     		
     		for (String value : n.getDomain()) {
     			//String value = valueRaw.toLowerCase();
     			//System.out.println("studying "+n.getName()+"="+value);
-    			Map<Map<NodeCategorical,String>,Integer> coordinates2count = new HashMap<>();
+    			Map<Map<NodeCategorical,String>,Double> coordinates2count = new HashMap<>();
     			IteratorCategoricalVariables itDomains = learnt.iterateDomains(n.getParents());
     			while (itDomains.hasNext()) {
     				Map<NodeCategorical,String> coord = itDomains.next().entrySet().stream().collect(
@@ -166,7 +177,7 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     								entry -> entry.getKey(), 
     								entry -> entry.getValue())
     						);
-    				coordinates2count.put(coord, 0);
+    				coordinates2count.put(coord, 0.0);
     				//System.out.println("\t"+coord);
     			}
     			value2coordinates2count.put(value, coordinates2count);
@@ -229,8 +240,13 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     			try {
 	    			//System.out.println(nodeToLearn+"="+value+" | "+coordinate);
 	
-	    			Integer previousCount = node2value2coordinates2count.get(nodeToLearn).get(value).get(coordinate);
-	    			node2value2coordinates2count.get(nodeToLearn).get(value).put(coordinate, previousCount+1);
+    				Double previousCount = node2value2coordinates2count.get(nodeToLearn).get(value).get(coordinate);
+	    			
+	    			double toAdd = 1;
+	    			if (useWeightColumn)
+	    				toAdd = ((DoubleValue)row.getCell(idxWeightColumn)).getDoubleValue();
+	    			
+	    			node2value2coordinates2count.get(nodeToLearn).get(value).put(coordinate, previousCount+toAdd);
 	    			
 	    			//System.out.println(nodeToLearn.getName()+"="+value+" | "+coordinate+" => "+(previousCount+1));
     			} catch (NullPointerException e) {
@@ -315,8 +331,8 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     								)
     						);
     				
-    				int totalValue = node.getDomain().stream()
-		    				.mapToInt( val -> node2value2coordinates2count.get(node).get(val).get(coord) + constantToAdd)
+    				double totalValue = node.getDomain().stream()
+		    				.mapToDouble( val -> node2value2coordinates2count.get(node).get(val).get(coord) + constantToAdd)
 		    				.sum();
 	
     				double p;
@@ -332,7 +348,7 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     				} else {
 	
 	    				
-	    				int countForCoord = node2value2coordinates2count.get(node).get(value).get(coord) + constantToAdd;
+	    				double countForCoord = node2value2coordinates2count.get(node).get(value).get(coord) + constantToAdd;
 	    				// / node.getDomainSize()
 	    				p = (double)countForCoord / totalValue; // * node.getParentsDimensionality(); // totalValue
 	    				//System.out.println(node.getName()+"="+value+" | "+coord+" => "+countForCoord+"/"+totalValue+" => "+p);
@@ -340,12 +356,11 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     				}
     				
     				try {
-    					double previous = node.getProbability(value, 
-								coordLower);
+    					//double previous = node.getProbability(value, coordLower);
     					node.setProbabilities(p, 
 											value, 
 											coordLower);
-    					System.out.println("setting "+node.getName()+"="+value+" | "+coord+" = "+p+" (instead of "+previous+")");
+    					//System.out.println("setting "+node.getName()+"="+value+" | "+coord+" = "+p+" (instead of "+previous+")");
     				} catch (IllegalArgumentException e) {
     					e.printStackTrace();
     					throw e;
@@ -400,6 +415,9 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     protected void saveSettingsTo(final NodeSettingsWO settings) {
 
     	m_constant.saveSettingsTo(settings);
+    	m_useWeightColumn.saveSettingsTo(settings);
+    	m_colnameWeight.saveSettingsTo(settings);
+    	
     }
 
     /**
@@ -410,6 +428,8 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
             throws InvalidSettingsException {
            
     	m_constant.loadSettingsFrom(settings);
+    	m_useWeightColumn.loadSettingsFrom(settings);
+    	m_colnameWeight.loadSettingsFrom(settings);
     
     }
 
@@ -421,6 +441,8 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
             throws InvalidSettingsException {
            
     	m_constant.validateSettings(settings);
+    	m_useWeightColumn.validateSettings(settings);
+    	m_colnameWeight.validateSettings(settings);
 
     }
     

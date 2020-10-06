@@ -45,6 +45,7 @@ import ch.resear.thiriot.knime.bayesiannetworks.LogIntoNodeLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.SimpleConditionningInferenceEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.EntitiesAndCount;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.RecursiveSamplingIterator;
 import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortObject;
@@ -164,9 +165,9 @@ public class SampleFromBNNodeModel extends NodeModel {
     		this.outputSpec = outputSpec;
     		this.exec = exec;
     		this.countToSample = countToSample;
-    		this.bn = bn;
+    		this.bn = bn; //.clone();
     		this.firstId = firstId;
-    		this.random = random;
+    		this.random = new MersenneTwister(random.nextInt());
     	                		
     	}
     	
@@ -175,23 +176,30 @@ public class SampleFromBNNodeModel extends NodeModel {
 
 	        BufferedDataContainer container = exec.createDataContainer(outputSpec);
 
-	        RecursiveSamplingIterator it = new RecursiveSamplingIterator(countToSample, bn, random, exec);
+	        RecursiveSamplingIterator it = new RecursiveSamplingIterator(
+	        		countToSample, 
+	        		bn, 
+	        		random, 
+	        		new SimpleConditionningInferenceEngine(ilogger, null, bn),
+	        		exec, 
+	        		ilogger);
 	        int done = 0;
 	        int rows = 0;
 	        while (it.hasNext()) {
-	        	
-	        	String msg = "sampling entity "+done;
+	        	double progress = (double)done/countToSample;
 	        	long timestampNow = System.currentTimeMillis();
-	        	if (firstId == 0) { // only the first thread makes it
+	        	if (firstId == 0) { // only the first thread makes message updates
+		        	String msg = "entity "+done;
+
 		        	long elapsedSeconds = (timestampNow - timestampStart)/1000;
 		        	if (elapsedSeconds > 10) {
 			        	double entitiesPerSecond = totalRowsGenerated / elapsedSeconds;
 			        	//logger.warn("generating "+((int)entitiesPerSecond)+" rows per second");
 			        	msg = msg + " ("+(int)entitiesPerSecond+"/s)";
 		        	}
-		        	exec.setProgress((double)done/countToSample, msg);
+		        	exec.setProgress(progress, msg);
 	        	} else {
-	        		exec.setProgress((double)done/countToSample);
+	        		exec.setProgress(progress);
 	        	}
 	        	
 	        	EntitiesAndCount next = it.next();

@@ -12,7 +12,7 @@ Adds nodes for the KNIME workflow engine to use Bayesian networks.
 * add nodes to a Bayesian network from KNIME data tables
 * enumerate all the combinations of values and the corresponding probabilities
 * compute the probability of a row
-
+* measure the difference between two Bayesian networks having the same structure
 
 # install it
 

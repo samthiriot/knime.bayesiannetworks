@@ -11,59 +11,59 @@
             tooltip="Bayesian Networks nodes">
       </splashExtension>
    </extension>
-                            <extension
-                                  point="org.knime.workbench.repository.categories">
-                               <category
-                                     description="Bayesian networks"
-                                     icon="src/ch/resear/thiriot/knime/bayesiannetworks/bn-icon.png"
-                                     level-id="bayesiannet"
-                                     locked="false"
-                                     name="Bayesian networks"
-                                     path="/community">
-                               </category>
-                               <category
-                                     description="Read Bayesian networks"
-                                     icon="src/ch/resear/thiriot/knime/bayesiannetworks/reader/bnreader-icon.png"
-                                     level-id="read"
-                                     locked="false"
-                                     name="Read"
-                                     path="/community/bayesiannet">
-                               </category>
-                               <category
-                                     after="read"
-                                     description="Create Bayesian networks"
-                                     icon="src/ch/resear/thiriot/knime/bayesiannetworks/bn-icon.png"
-                                     level-id="create"
-                                     locked="false"
-                                     name="Create"
-                                     path="/community/bayesiannet">
-                               </category>
-                               <category
-                                     after="create"
-                                     icon="src/ch/resear/thiriot/knime/bayesiannetworks/sample/bnsample-icon.png"
-                                     level-id="sample"
-                                     locked="false"
-                                     name="Sample"
-                                     path="/community/bayesiannet">
-                               </category>
-                               <category
-                                     after="sample"
-                                     icon="src/ch/resear/thiriot/knime/bayesiannetworks/bn-icon.png"
-                                     level-id="learn"
-                                     locked="false"
-                                     name="Learn"
-                                     path="/community/bayesiannet">
-                               </category>
-                               <category
-                                     after="learn"
-                                     description="Write Bayesian networks"
-                                     icon="src/ch/resear/thiriot/knime/bayesiannetworks/writer/xmlbif/bnwriter-icon.png"
-                                     level-id="write"
-                                     locked="false"
-                                     name="Write"
-                                     path="/community/bayesiannet">
-                               </category>
-                            </extension>
+    <extension
+          point="org.knime.workbench.repository.categories">
+       <category
+             description="Bayesian networks"
+             icon="src/ch/resear/thiriot/knime/bayesiannetworks/bn-icon.png"
+             level-id="bayesiannet"
+             locked="false"
+             name="Bayesian networks"
+             path="/community">
+       </category>
+       <category
+             description="Read Bayesian networks"
+             icon="src/ch/resear/thiriot/knime/bayesiannetworks/reader/bnreader-icon.png"
+             level-id="read"
+             locked="false"
+             name="Read"
+             path="/community/bayesiannet">
+       </category>
+       <category
+             after="read"
+             description="Create Bayesian networks"
+             icon="src/ch/resear/thiriot/knime/bayesiannetworks/bn-icon.png"
+             level-id="create"
+             locked="false"
+             name="Create"
+             path="/community/bayesiannet">
+       </category>
+       <category
+             after="create"
+             icon="src/ch/resear/thiriot/knime/bayesiannetworks/sample/bnsample-icon.png"
+             level-id="sample"
+             locked="false"
+             name="Sample"
+             path="/community/bayesiannet">
+       </category>
+       <category
+             after="sample"
+             icon="src/ch/resear/thiriot/knime/bayesiannetworks/bn-icon.png"
+             level-id="learn"
+             locked="false"
+             name="Learn"
+             path="/community/bayesiannet">
+       </category>
+       <category
+             after="learn"
+             description="Write Bayesian networks"
+             icon="src/ch/resear/thiriot/knime/bayesiannetworks/writer/xmlbif/bnwriter-icon.png"
+             level-id="write"
+             locked="false"
+             name="Write"
+             path="/community/bayesiannet">
+       </category>
+    </extension>
    <extension point="org.knime.core.PortType">
       <portType
             color="#219829"

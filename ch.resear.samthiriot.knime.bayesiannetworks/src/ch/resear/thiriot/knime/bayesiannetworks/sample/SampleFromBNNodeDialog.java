@@ -37,7 +37,7 @@ public class SampleFromBNNodeDialog extends DefaultNodeSettingsPane {
                     SampleFromBNNodeModel.CFGKEY_COUNT,
                     SampleFromBNNodeModel.DEFAULT_COUNT,
                     0, Integer.MAX_VALUE),
-                    "Samples:", /*step*/ 1, /*componentwidth*/ 5));
+                    "Samples:", /*step*/ 1, /*componentwidth*/ 10));
                   
         addDialogComponent(new DialogComponentSeed(
         	    new SettingsModelSeed(

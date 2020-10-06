@@ -6,16 +6,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionMonitor;
 
-import cern.colt.Arrays;
-import cern.jet.random.AbstractContinousDistribution;
 import cern.jet.random.engine.RandomEngine;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.BayesianNetwork;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.AbstractInferenceEngine;
 
 public class RecursiveSamplingIterator implements Iterator<EntitiesAndCount> {
 
@@ -25,6 +25,8 @@ public class RecursiveSamplingIterator implements Iterator<EntitiesAndCount> {
 	private final RandomEngine rng;
 	
 	private final ExecutionMonitor exec;
+	private final ILogger logger;
+	private final boolean debug;
 	
 	private final NodeCategorical node;
 	
@@ -36,24 +38,32 @@ public class RecursiveSamplingIterator implements Iterator<EntitiesAndCount> {
 	
 	private final Map<NodeCategorical,Map<String,Double>> alreadyComputedNow;
 	
+	private final AbstractInferenceEngine engine;
+	
 	public RecursiveSamplingIterator(
 			int count, 
 			CategoricalBayesianNetwork bn, 
 			RandomEngine rng,
-			ExecutionMonitor exec) {
-		this(count, bn.enumerateNodes(), rng, exec);
+			AbstractInferenceEngine engine,
+			ExecutionMonitor exec,
+			ILogger ilogger) {
+		this(count, bn.enumerateNodes(), rng, engine, exec, ilogger);
 	}
 
 	public RecursiveSamplingIterator(
 			int count, 
 			List<NodeCategorical> nodes, 
 			RandomEngine rng,
-			ExecutionMonitor exec) {
+			AbstractInferenceEngine engine,
+			ExecutionMonitor exec,
+			ILogger ilogger) {
 		
 		this(count, nodes.get(0), nodes.subList(1, nodes.size()),
 			Collections.emptyMap(), Collections.emptyMap(),
 			rng,
+			engine,
 			exec,
+			ilogger,
 			""
 			);		
 		
@@ -64,7 +74,9 @@ public class RecursiveSamplingIterator implements Iterator<EntitiesAndCount> {
 			Map<NodeCategorical,String> evidence,
 			Map<NodeCategorical,Map<String,Double>> alreadyComputed,
 			RandomEngine rng,
+			AbstractInferenceEngine engine,
 			ExecutionMonitor exec,
+			ILogger ilogger,
 			String name
 			) {
 		
@@ -75,14 +87,29 @@ public class RecursiveSamplingIterator implements Iterator<EntitiesAndCount> {
 		this.rng = rng;
 		this.evidence = evidence;
 		this.remaining = remaining;
+		this.logger = ilogger;
+		this.engine = engine;
+		this.debug = ilogger.isDebugEnabled();
 		
 		// build the table of probabilities for this case
-		double[] probabilities = n.getDomain()
+		if (debug) {
+			logger.debug("iterator "+this.name+(remaining.isEmpty()?" -| ":"")+" (generate "+count+")"); 
+			logger.debug("\tcomputing p("+n.name+"|"+evidence.entrySet().stream().map(e -> e.getKey().name+"="+e.getValue()).collect(Collectors.joining(","))+")");
+		}
+		engine.clearEvidence();
+		engine.addEvidence(evidence);
+		double[] probabilities = node.getDomain()
 									.stream()
 									.mapToDouble(
-											s -> n.getConditionalProbabilityPosterior(s, evidence, alreadyComputed)
+											s -> engine.getConditionalProbability(node, s) // n.getConditionalProbabilityPosterior(s, evidence, alreadyComputed)
 									).toArray();
-		//System.out.println("probabilities:\t "+Arrays.toString(probabilities));
+		if (debug) {
+			logger.debug("\tprobabilities: "+java.util.Arrays.toString(probabilities));
+		}
+		if (Double.isNaN(probabilities[0])) {
+			throw new RuntimeException("unable to compute p("+n.name+"|"+evidence.entrySet().stream().map(e -> e.getKey().name+"="+e.getValue()).collect(Collectors.joining(","))+")");
+		}
+		//System.out.println("probabilities:\t "+java.util.Arrays.toString(probabilities));
 		
 		// add out values to what was already computed
 		alreadyComputedNow = new HashMap<>(alreadyComputed);
@@ -93,64 +120,84 @@ public class RecursiveSamplingIterator implements Iterator<EntitiesAndCount> {
 		alreadyComputedNow.put(n, node2v);
 		
 		// how many entities should be generated here?
-		double[] counts = probabilities.clone();
-		for (int i=0; i<counts.length; i++) {
-			counts[i] = counts[i] * count;
+		double[] frequencies = probabilities.clone();
+		for (int i=0; i<frequencies.length; i++) {
+			frequencies[i] = frequencies[i] * count;
 		}
-		//System.out.println("counts:\t "+Arrays.toString(counts));
+		if (debug) {
+			logger.debug("\tfrequencies:");
+			logger.debug("\t"+java.util.Arrays.toString(frequencies));
+		}
+		//System.out.println("counts:\t "+java.util.Arrays.toString(counts));
 
 		// how many fixed entities should be generated?
-		int[] countsf = new int[counts.length];
+		int[] counts = new int[frequencies.length];
 		int totalgenerated = 0;
-		for (int i=0; i<counts.length; i++) {
-			countsf[i] = (int)Math.floor(counts[i]);
-			totalgenerated += countsf[i]; 
+		for (int i=0; i<frequencies.length; i++) {
+			counts[i] = (int)Math.floor(frequencies[i]);
+			totalgenerated += counts[i]; 
 		}
-		//System.out.println("numbers:\t "+Arrays.toString(countsf));
-		
+		//System.out.println("numbers:\t "+java.util.Arrays.toString(countsf));
+		if (debug) {
+			logger.debug("\tcounts:");
+			logger.debug("\t"+java.util.Arrays.toString(counts));
+		}
 		// maybe we did not yet generated everything?
 		if (totalgenerated < count) {
+			
+			if (debug)
+				logger.debug("\twe still have to distribute "+(count-totalgenerated));
+			
 			// what is the remainder?
 			//double[] missing = counts.clone();
-			double[] missingCumulated = counts.clone();
+			double[] missingCumulated = frequencies.clone();
 			double missingSum = 0.0;
-			for (int i=0; i<counts.length; i++) {
-				double diff = counts[i] - countsf[i];
+			for (int i=0; i<frequencies.length; i++) {
+				double diff = frequencies[i] - counts[i];
 				//missing[i] = diff;
 				missingCumulated[i] = diff + missingSum;
 				missingSum += diff;
 			}
-			//System.out.println("remains:\t "+Arrays.toString(missing));
+			//System.out.println("remains:\t "+java.util.Arrays.toString(missing));
 
 			// now we have to split the remaining entities!
-			//System.out.println("remaining "+(count-totalgenerated)+" entities for "+Arrays.toString(missing));
+			//System.out.println("remaining "+(count-totalgenerated)+" entities for "+java.util.Arrays.toString(missing));
 			
 			// select one entity!
 			// generate a random number between [0 : missingCumulated]
 			while (totalgenerated < count) {
+				
 				final double random = rng.nextDouble() * missingSum;
+				
+				if (debug)
+					logger.debug("\tweighted roulette for p="+random //+" on "java.util.Arrays.toString(missingCumulated)
+							);
 				
 				int idx = java.util.Arrays.binarySearch(missingCumulated, random);
 				
 				if (idx > 0) {
-					countsf[idx]++;
+					counts[idx]++;
 				} else {
-					countsf[-idx-1]++;
+					counts[-idx-1]++;
 				}
 				totalgenerated++;
 				
 			}
 			
+			if (debug) {
+				logger.debug("\tcounts:");
+				logger.debug("\t"+java.util.Arrays.toString(counts));
+			}
 
 		}
 		
-		//System.out.println("counts:\t "+Arrays.toString(countsf));
-
+		//System.out.println("counts:\t "+java.util.Arrays.toString(countsf));
+	
 		Map<String,Integer> value2count = new HashMap<>();
-		for (int i=0; i<counts.length; i++) {
-			if (countsf[i] == 0)
+		for (int i=0; i<frequencies.length; i++) {
+			if (counts[i] == 0)
 				continue;
-			value2count.put(n.getDomain(i), countsf[i]);
+			value2count.put(n.getDomain(i), counts[i]);
 		}
 	
 		itDomainAndCount = value2count.entrySet().iterator();
@@ -198,7 +245,9 @@ public class RecursiveSamplingIterator implements Iterator<EntitiesAndCount> {
 					evidenceNow,
 					alreadyComputedNow,
 					rng,
+					engine,
 					exec,
+					logger,
 					name
 					);
 		
