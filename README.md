@@ -1,5 +1,7 @@
 # knime.bayesiannetworks
-Bayesian Networks nodes for KNIME
+
+Bayesian Networks nodes for KNIME.
+Enables the generation of synthetic datasets, generation of synthetic populations, learning of statistical models, statistical inference. 
 
 ## Features
 
