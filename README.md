@@ -53,3 +53,15 @@ Then the Bayesian network can be used for sampling or data augmentation, and can
 ![example of workflow creation, sampling and writing](./doc/screenshot_create_sample_write.png)
 
 
+## Data fusion 
+
+The Bayesian network can be used to "augment" or join data.
+
+In this example ([download it](./doc/example_augment_data.knwf)), we show:
+* we read existing data having only two columns `surface` and `annee` 
+* the missing column is present in the Bayesian network which describes `p( combustible | surface, annee )`
+* for every row, the node samples missing data according to the probabities `p( combustible | surface, annee )` and existing values `surface` and `annee` in the row. 
+
+![example of data fusion](./doc/screenshot_augment_data.png)
+
+
