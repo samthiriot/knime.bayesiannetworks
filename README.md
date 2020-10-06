@@ -37,4 +37,17 @@ To measure the quality of the sampling, one learns the probabilities of the Baye
 You can [download it](./doc/example_read_sample_measure.knwf) to try it yourself.
 
 
+## Create, Sample, Write
+
+The Bayesian network can be easily created in KNIME. 
+
+In this example ([download it](./doc/example_create_sample_write.knwf)), we show:
+* how to read a table from a CSV file, and use it as the Conditional Probability Table of a new variable in the Bayesian network
+* how to create a table by hand in KNIME, and use it as a Conditional Probability Table of a new variable,
+* how to aggregate statistics from a KNIME table by using a standard "group by" node, then insert it as a Bayesian network 
+
+Then the Bayesian network can be used for sampling or data augmentation, and can be written in standard format.
+
+![example of workflow creation, sampling and writing](./doc/screenshot_create_sample_write.png)
+
 
