@@ -13,7 +13,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import org.eclipse.ui.internal.misc.ProgramImageDescriptor;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
@@ -49,12 +48,10 @@ import ch.resear.thiriot.knime.bayesiannetworks.LogIntoNodeLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.EliminationInferenceEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.SimpleConditionningInferenceEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.EntitiesAndCount;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.ForwardSamplingIterator;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.MultinomialRecursiveSamplingIterator;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.RecursiveSamplingIterator;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.RoundAndSampleRecursiveSamplingIterator;
 import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortObject;
 
@@ -436,12 +433,14 @@ public class SampleFromBNNodeModel extends NodeModel {
     	totalRowsGenerated = 0;
     	timestampStart = System.currentTimeMillis();
     	List<Future<BufferedDataTable>> results = executorService.invokeAll(samplers);
+    	int performance;
     	{
     		long timestampNow = System.currentTimeMillis();
-    		long elapsedSeconds = (timestampNow - timestampStart)/1000;
+    		long elapsedMilliSeconds = (timestampNow - timestampStart);
+    		performance = (int)(((double)countToSample/(double)elapsedMilliSeconds)*1000.0);
     		logger.info(
     				"generation of "+countToSample+" entities on "+threadsToUse+" CPUs with method "+generationMethod
-    						+ " took "+elapsedSeconds+"s, that is on average "+((int)Math.floor((double)countToSample/elapsedSeconds))+" entities/s");
+    						+ " took "+elapsedMilliSeconds+"s, that is on average "+performance+" entities/s");
     	}
     	
         // merge
@@ -459,6 +458,7 @@ public class SampleFromBNNodeModel extends NodeModel {
         }
         
         pushFlowVariableInt("sampled_count", countToSample);
+        pushFlowVariableInt("sampling_performance_entities_per_second", performance);
 
         //exec.setProgress(100, "closing outputs");
 
