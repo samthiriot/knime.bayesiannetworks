@@ -7,9 +7,15 @@ import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentNumber;
 import org.knime.core.node.defaultnodesettings.DialogComponentSeed;
+import org.knime.core.node.defaultnodesettings.DialogComponentStringSelection;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelSeed;
+import org.knime.core.node.defaultnodesettings.SettingsModelString;
+
+import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.ForwardSamplingIterator;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.MultinomialRecursiveSamplingIterator;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.RoundAndSampleRecursiveSamplingIterator;
 
 /**
  * <code>NodeDialog</code> for the "SampleFromBNNode" Node.
@@ -47,9 +53,28 @@ public class SampleFromBNNodeDialog extends DefaultNodeSettingsPane {
         	    "seed"
         	    ));
         
+        SettingsModelString m_generation_method = new SettingsModelString("m_generation_method", MultinomialRecursiveSamplingIterator.GENERATION_METHOD_NAME);
+        addDialogComponent(new DialogComponentStringSelection(
+        		m_generation_method, 
+        		"generation method", 
+        		java.util.Arrays.asList(
+        				MultinomialRecursiveSamplingIterator.GENERATION_METHOD_NAME,
+        				RoundAndSampleRecursiveSamplingIterator.GENERATION_METHOD_NAME,
+        				ForwardSamplingIterator.GENERATION_METHOD_NAME)
+        		));
 
-        addDialogComponent(new DialogComponentBoolean(new SettingsModelBoolean("m_grouprows", true), "group similar raws"));
+        SettingsModelBoolean m_grouprows = new SettingsModelBoolean("m_grouprows", true);
+        addDialogComponent(new DialogComponentBoolean(m_grouprows, "group similar raws"));
 
+        // one can only group rows for the methods working by groups
+        m_grouprows.setEnabled(!m_generation_method.getStringValue().equals(ForwardSamplingIterator.GENERATION_METHOD_NAME));
+        m_generation_method.addChangeListener(new ChangeListener() {
+			@Override
+			public void stateChanged(ChangeEvent e) {
+		        m_grouprows.setEnabled(!m_generation_method.getStringValue().equals(ForwardSamplingIterator.GENERATION_METHOD_NAME));
+			}
+		});
+        
         SettingsModelBoolean m_threadsAuto = new SettingsModelBoolean(
         		"m_threads_auto", 
         		true);

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.eclipse.ui.internal.misc.ProgramImageDescriptor;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
@@ -33,11 +35,13 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelSeed;
+import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 
 import cern.colt.Version;
+import cern.jet.random.Binomial;
 import cern.jet.random.engine.MersenneTwister;
 import cern.jet.random.engine.RandomEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.DataTableToBNMapper;
@@ -45,9 +49,13 @@ import ch.resear.thiriot.knime.bayesiannetworks.LogIntoNodeLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.EliminationInferenceEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.SimpleConditionningInferenceEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.EntitiesAndCount;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.ForwardSamplingIterator;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.MultinomialRecursiveSamplingIterator;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.RecursiveSamplingIterator;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.RoundAndSampleRecursiveSamplingIterator;
 import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortObject;
 
 
@@ -90,6 +98,9 @@ public class SampleFromBNNodeModel extends NodeModel {
     
     private final SettingsModelBoolean m_groupRows = new SettingsModelBoolean("m_grouprows", true);
     
+    private final SettingsModelString m_generationMethod = new SettingsModelString(
+    				"m_generation_method", MultinomialRecursiveSamplingIterator.GENERATION_METHOD_NAME);
+    
     private final SettingsModelBoolean m_threadsAuto = new SettingsModelBoolean(
     		"m_threads_auto", 
     		true);
@@ -127,7 +138,8 @@ public class SampleFromBNNodeModel extends NodeModel {
     		specs.add(node2mapper.get(node).getSpecForNode());
     	}
     	
-    	if (m_groupRows.getBooleanValue())
+    	if (m_groupRows.getBooleanValue() && 
+    			!m_generationMethod.getStringValue().equals(ForwardSamplingIterator.GENERATION_METHOD_NAME))
     		specs.add(new DataColumnSpecCreator("count", IntCell.TYPE).createSpec());
     	
     	return specs.toArray(new DataColumnSpec[specs.size()]);
@@ -153,6 +165,7 @@ public class SampleFromBNNodeModel extends NodeModel {
     	private final CategoricalBayesianNetwork bn;
         private final int firstId;
         private final RandomEngine random;
+        private final String method;
         
     	public BNToTableSampler(
     				RandomEngine random, 
@@ -160,7 +173,8 @@ public class SampleFromBNNodeModel extends NodeModel {
     				DataTableSpec outputSpec,
     				ExecutionContext exec,
     				int countToSample,
-    				int firstId) {
+    				int firstId,
+    				final String method) {
 
     		this.outputSpec = outputSpec;
     		this.exec = exec;
@@ -168,7 +182,7 @@ public class SampleFromBNNodeModel extends NodeModel {
     		this.bn = bn; //.clone();
     		this.firstId = firstId;
     		this.random = new MersenneTwister(random.nextInt());
-    	                		
+    		this.method = method;
     	}
     	
 		@Override
@@ -176,13 +190,28 @@ public class SampleFromBNNodeModel extends NodeModel {
 
 	        BufferedDataContainer container = exec.createDataContainer(outputSpec);
 
-	        RecursiveSamplingIterator it = new RecursiveSamplingIterator(
-	        		countToSample, 
-	        		bn, 
-	        		random, 
-	        		new SimpleConditionningInferenceEngine(ilogger, null, bn),
-	        		exec, 
-	        		ilogger);
+	        Iterator<EntitiesAndCount> it;
+	        if (method.equals(RoundAndSampleRecursiveSamplingIterator.GENERATION_METHOD_NAME))
+		        it = new RoundAndSampleRecursiveSamplingIterator(
+		        		countToSample, 
+		        		bn, 
+		        		random, 
+		        		new SimpleConditionningInferenceEngine(ilogger, null, bn),
+		        		exec, 
+		        		ilogger);
+	        else if (method.equals(MultinomialRecursiveSamplingIterator.GENERATION_METHOD_NAME))
+	        	it = new MultinomialRecursiveSamplingIterator(
+		        		countToSample, 
+		        		bn, 
+		        		new Binomial(42, 0.1, random), 
+		        		new SimpleConditionningInferenceEngine(ilogger, null, bn),
+		        		exec, 
+		        		ilogger);
+	        else if (method.equals(ForwardSamplingIterator.GENERATION_METHOD_NAME))
+	        	it = new ForwardSamplingIterator(random, bn, countToSample, ilogger);
+	        else
+	        	throw new RuntimeException("Unknown generation method "+method);
+	        
 	        int done = 0;
 	        int rows = 0;
 	        while (it.hasNext()) {
@@ -328,9 +357,11 @@ public class SampleFromBNNodeModel extends NodeModel {
     		throw new IllegalArgumentException("The input should be a Bayesian network", e);
     	}
     	
-    	// retrieve parameter
+    	// retrieve parameters
     	final int countToSample = m_count.getIntValue();
-    	groupRows = m_groupRows.getBooleanValue();
+    	final String generationMethod = m_generationMethod.getStringValue();
+    	groupRows = m_groupRows.getBooleanValue() && !generationMethod.equals(ForwardSamplingIterator.GENERATION_METHOD_NAME);
+    	
     	
         // retrieve the seed
     	int seed; 
@@ -383,7 +414,8 @@ public class SampleFromBNNodeModel extends NodeModel {
 	        					random, bn, outputSpec, 
 	        					exec.createSubExecutionContext(0.9/threadsToUse), 
 	        					count,
-	        					countDistributed
+	        					countDistributed,
+	        					generationMethod
 	        			));
 	        	countDistributed += count;
 	        }
@@ -392,7 +424,8 @@ public class SampleFromBNNodeModel extends NodeModel {
 	    					random, bn, outputSpec, 
 	    					exec.createSubExecutionContext(0.9/threadsToUse), 
 	    					countRemaining,
-	    					countDistributed
+	    					countDistributed,
+	    					generationMethod
 	    			));
 
     	}
@@ -403,9 +436,14 @@ public class SampleFromBNNodeModel extends NodeModel {
     	totalRowsGenerated = 0;
     	timestampStart = System.currentTimeMillis();
     	List<Future<BufferedDataTable>> results = executorService.invokeAll(samplers);
-        
-        exec.checkCanceled();
-        
+    	{
+    		long timestampNow = System.currentTimeMillis();
+    		long elapsedSeconds = (timestampNow - timestampStart)/1000;
+    		logger.info(
+    				"generation of "+countToSample+" entities on "+threadsToUse+" CPUs with method "+generationMethod
+    						+ " took "+elapsedSeconds+"s, that is on average "+((int)Math.floor((double)countToSample/elapsedSeconds))+" entities/s");
+    	}
+    	
         // merge
         exec.setProgress("merging tables");
         BufferedDataTable resTable;
@@ -449,6 +487,8 @@ public class SampleFromBNNodeModel extends NodeModel {
         m_count.saveSettingsTo(settings);
         m_seed.saveSettingsTo(settings);
         
+        m_generationMethod.saveSettingsTo(settings);
+        
         m_threads.saveSettingsTo(settings);
         m_threadsAuto.saveSettingsTo(settings);
         
@@ -465,6 +505,8 @@ public class SampleFromBNNodeModel extends NodeModel {
         m_count.loadSettingsFrom(settings);
         m_seed.loadSettingsFrom(settings);
         
+        m_generationMethod.loadSettingsFrom(settings);
+        
         m_threads.loadSettingsFrom(settings);
         m_threadsAuto.loadSettingsFrom(settings);
         
@@ -480,6 +522,8 @@ public class SampleFromBNNodeModel extends NodeModel {
             
         m_count.validateSettings(settings);
         m_seed.validateSettings(settings);
+        
+        m_generationMethod.validateSettings(settings);
         
         m_threads.validateSettings(settings);
         m_threadsAuto.validateSettings(settings);

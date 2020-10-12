@@ -19,6 +19,25 @@
         this node generates a data table  
         with columns corresponding the variables of the BN, and the content of cells being the categories of the variables.
         <br/>
+        Three sampling methods are available:
+        <ul>
+        <li>forward sampling: for each entity to generate, will start with one root of the network, sample one value; 
+        continue with a next node, compute the conditional probabilities, sample one value, and so on. 
+        Purely stochastic. Efficient for small counts.</li>
+        <li>multinomial sampling: fear n entities to generate, will start with one root of the network, and then sample
+        the expected frequency of this probability for n entities; then it will explore the next node, compute the conditional 
+        probabilities, sample the expected frequencies for this probabilities and n2 entities to sample, etc. 
+        This method is more efficient when there are many entities to generate. This method preserve the probability distribution
+        over multiple samples.
+        It is possible to group the similar lines 
+        together.</li>
+        <li>round and sample: for n entities to generate, assumes we should always be as close as possible to the proportions
+        described in the probability distribution. For each node of the network, will compute the probabilities, then 
+        count how many entities should be for sure generated. Then for the remaining entities, samples randomly which ones 
+        are going to be sampled. This method is more efficient. This method preserves the probability distribution for one
+        sample, but not for several samples (there will not be much variations between two runs)</li>
+        </ul>
+        <br/>
         Computing time depends on the size of the Bayesian network: size of the Conditional Probability Tables, 
         count of them. 
         The behavior is not linear thanks to caching of computations: the more lines your compute, the quicker it goes.
@@ -33,16 +52,15 @@
         <option name="Samples">How many lines to sample (generate)</option>
         <option name="Seed">Enables you to freeze the Random Number Generator used to sample. 
         If you do not understand what this means, keep it unchecked so a different result is produced at every run.</option>
-        <option name="group similar rows">If several rows are similar, grouping will add a column count and indicate the count there; 
+        <option name="generation method">If several rows are similar, grouping will add a column count and indicate the count there; 
         else one row will be created for each result</option>
+        <option name="group similar rows">How to sample. See earlier.</option>
         
         
     </fullDescription>
     
     <ports>
         <inPort index="0" name="Bayesian network">Bayesian network</inPort>
-        <!-- possibly more input ports here-->
         <outPort index="0" name="sample">Samples generated from the Bayesian network</outPort>
-        <!-- possibly more output ports here-->
     </ports>    
 </knimeNode>
