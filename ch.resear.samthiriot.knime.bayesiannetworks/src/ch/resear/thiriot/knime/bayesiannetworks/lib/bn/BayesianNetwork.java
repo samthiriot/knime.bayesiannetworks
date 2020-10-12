@@ -3,6 +3,8 @@ package ch.resear.thiriot.knime.bayesiannetworks.lib.bn;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -220,8 +222,12 @@ public class BayesianNetwork<N extends AbstractNode<N>> {
 	 * @throws FileNotFoundException
 	 */
 	public void saveAsBIF(File f) throws FileNotFoundException {
-
-		PrintStream ps = new PrintStream(f);
+		PrintStream ps;
+		try {
+			ps = new PrintStream(f, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			ps = new PrintStream(f);
+		}
 		ps.print(getAsBIFString());
 		ps.close();
 	}
@@ -239,7 +245,12 @@ public class BayesianNetwork<N extends AbstractNode<N>> {
 	 */
 	public void saveAsXMLBIF(File f) throws FileNotFoundException {
 
-		PrintStream ps = new PrintStream(f);
+		PrintStream ps;
+		try {
+			ps = new PrintStream(f, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			ps = new PrintStream(f);
+		}
 		ps.print(getAsXMLString());
 		ps.close();
 	}
