@@ -28,7 +28,7 @@ public class XMLBIFBNReaderNodeDialog extends DefaultNodeSettingsPane {
         addDialogComponent(new DialogComponentFileChooser(
         		new SettingsModelString("filename", null),
         		"bayesian_network",
-        		".xmlbif", ".bif" // TODO other extensions 
+        		".xmlbif|.xbif" // TODO other extensions? 
         		));
           
     }
