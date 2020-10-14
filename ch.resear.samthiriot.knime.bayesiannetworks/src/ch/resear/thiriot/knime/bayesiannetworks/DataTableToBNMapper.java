@@ -132,12 +132,12 @@ public class DataTableToBNMapper {
 			
 			cell2string.put(
 					BooleanCell.FALSE,
-					node.getDomain().stream().filter( s -> s.toLowerCase().equals("false")).findFirst().get()
+					node.getDomain().stream().filter( s -> s.toLowerCase().equals("false") ).findFirst().get()
 					);
 			
 			cell2string.put(
 					BooleanCell.TRUE,
-					node.getDomain().stream().filter( s -> s.toLowerCase().equals("true")).findFirst().get()
+					node.getDomain().stream().filter( s -> s.toLowerCase().equals("true") ).findFirst().get()
 					);
 			
 			res = cell2string.get(cell);

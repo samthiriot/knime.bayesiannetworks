@@ -91,6 +91,8 @@ public class SampleFromBNNodeDialog extends DefaultNodeSettingsPane {
         addDialogComponent(new DialogComponentBoolean(m_threadsAuto, "use all CPUs"));
         addDialogComponent(new DialogComponentNumber(m_threads, "max CPUs to use", 1));
         
+        addDialogComponent(new DialogComponentBoolean(new SettingsModelBoolean("m_nostorage", false), "do not store (xp)"));
+        
     }
 }
 
