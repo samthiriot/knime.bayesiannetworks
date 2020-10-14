@@ -351,12 +351,16 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     					//p = 0;
     					
     					if (methodNoCaseEquiproba) {
-    						warnings.add("there is no data for the case "+coord+"; will assume equiprobability");
+    						warnings.add("no observation for the case "+node.name+"="+value+" given " +
+    									coord.entrySet().stream().map(e -> e.getKey().name+"="+e.getValue()).collect(Collectors.joining(", "))+
+    									"; will assume equiprobability");
     					
 	    					// no case found. Hard to say :-/ 
 	    					p = 1.0/node.getDomainSize();
     					} else {
-    						warnings.add("there is no data for the case "+coord+"; will keep former probabilities");
+    						warnings.add("no observation for the case "+node.name+"="+value+" given "+
+    								coord.entrySet().stream().map(e -> e.getKey().name+"="+e.getValue()).collect(Collectors.joining(", "))+
+    								"; will keep former probabilities");
         					p = -1;
     					}
     				} else {
