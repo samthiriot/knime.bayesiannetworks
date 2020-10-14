@@ -8,9 +8,11 @@ import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
 import org.knime.core.node.defaultnodesettings.DialogComponentNumber;
+import org.knime.core.node.defaultnodesettings.DialogComponentStringSelection;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelColumnName;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
+import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * @author Samuel Thiriot
@@ -51,6 +53,15 @@ public class LearnBNFromSampleNodeDialog extends DefaultNodeSettingsPane {
         		1,
         		false,
         		DoubleValue.class
+        		));
+        
+        addDialogComponent(new DialogComponentStringSelection(
+        		new SettingsModelString(
+        	    		"m_method_no_vase", 
+        	    		LearnBNFromSampleNodeModel.METHOD_NOCASE_PREVIOUS), 
+        		"deal with no case", 
+        		LearnBNFromSampleNodeModel.METHOD_NOCASE_PREVIOUS,
+        		LearnBNFromSampleNodeModel.METHOD_NOCASE_EQUIPROBABILITY
         		));
         
     }

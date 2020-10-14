@@ -25,6 +25,7 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelColumnName;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
+import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
@@ -52,6 +53,9 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
             .getLogger(LearnBNFromSampleNodeModel.class);
     private static final ILogger ilogger = new LogIntoNodeLogger(logger);
 
+    public static final String METHOD_NOCASE_EQUIPROBABILITY = "assume equiprobability";
+    public static final String METHOD_NOCASE_PREVIOUS = "keep previous probabilities";
+    
     private SettingsModelIntegerBounded m_constant = new SettingsModelIntegerBounded(
     		"m_addconstant", 0, 
     		0, 1000);
@@ -60,6 +64,10 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     		"m_use_weight_colum", false);
     
     private SettingsModelColumnName m_colnameWeight = new SettingsModelColumnName("m_colname", null);
+    
+    private SettingsModelString m_methodNoCase = new SettingsModelString(
+    		"m_method_no_vase", 
+    		LearnBNFromSampleNodeModel.METHOD_NOCASE_PREVIOUS);
     
     /**
      * Constructor for the node model.
@@ -104,7 +112,9 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     	final boolean useWeightColumn = m_useWeightColumn.getBooleanValue();
     	final String nameWeightColumn = m_colnameWeight.getColumnName();
     	final int idxWeightColumn = sample.getDataTableSpec().findColumnIndex(nameWeightColumn);
-    			
+    	final String methodNoCase = m_methodNoCase.getStringValue();
+    	final boolean methodNoCaseEquiproba = METHOD_NOCASE_EQUIPROBABILITY.equals(methodNoCase);
+    	
     	// the future result
     	CategoricalBayesianNetwork learnt = bn.clone();
 
@@ -340,11 +350,15 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     				if (totalValue == constantToAdd * node.getDomainSize()) {
     					//p = 0;
     					
-    					warnings.add("there is no data for the case "+coord+"; will assume equiprobability");
+    					if (methodNoCaseEquiproba) {
+    						warnings.add("there is no data for the case "+coord+"; will assume equiprobability");
     					
-    					// no case found. Hard to say :-/ 
-    					p = 1.0/node.getDomainSize();
-    					
+	    					// no case found. Hard to say :-/ 
+	    					p = 1.0/node.getDomainSize();
+    					} else {
+    						warnings.add("there is no data for the case "+coord+"; will keep former probabilities");
+        					p = -1;
+    					}
     				} else {
 	
 	    				
@@ -355,15 +369,17 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
 
     				}
     				
-    				try {
-    					//double previous = node.getProbability(value, coordLower);
-    					node.setProbabilities(p, 
-											value, 
-											coordLower);
-    					//System.out.println("setting "+node.getName()+"="+value+" | "+coord+" = "+p+" (instead of "+previous+")");
-    				} catch (IllegalArgumentException e) {
-    					e.printStackTrace();
-    					throw e;
+    				if (p >= 0) {
+	    				try {
+	    					//double previous = node.getProbability(value, coordLower);
+	    					node.setProbabilities(p, 
+												value, 
+												coordLower);
+	    					//System.out.println("setting "+node.getName()+"="+value+" | "+coord+" = "+p+" (instead of "+previous+")");
+	    				} catch (IllegalArgumentException e) {
+	    					e.printStackTrace();
+	    					throw e;
+	    				}
     				}
 	    			
     			}
@@ -417,6 +433,7 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     	m_constant.saveSettingsTo(settings);
     	m_useWeightColumn.saveSettingsTo(settings);
     	m_colnameWeight.saveSettingsTo(settings);
+    	m_methodNoCase.saveSettingsTo(settings);
     	
     }
 
@@ -430,7 +447,7 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     	m_constant.loadSettingsFrom(settings);
     	m_useWeightColumn.loadSettingsFrom(settings);
     	m_colnameWeight.loadSettingsFrom(settings);
-    
+    	m_methodNoCase.loadSettingsFrom(settings);
     }
 
     /**
@@ -443,7 +460,7 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     	m_constant.validateSettings(settings);
     	m_useWeightColumn.validateSettings(settings);
     	m_colnameWeight.validateSettings(settings);
-
+    	m_methodNoCase.validateSettings(settings);
     }
     
     /**
