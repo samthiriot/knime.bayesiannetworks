@@ -56,6 +56,11 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     public static final String METHOD_NOCASE_EQUIPROBABILITY = "assume equiprobability";
     public static final String METHOD_NOCASE_PREVIOUS = "keep previous probabilities";
     
+    /**
+     * Maximum count of warnings to display
+     */
+    private static final int MAX_WARNINGS = 30;
+    
     private SettingsModelIntegerBounded m_constant = new SettingsModelIntegerBounded(
     		"m_addconstant", 0, 
     		0, 1000);
@@ -288,6 +293,7 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     	exec.setProgress("aggregating statistics");
     	
     	Set<String> warnings = new HashSet<>();
+    	int moreWarnings = 0;
     	
     	int n = 0;
     	for (NodeCategorical node: nodesToLearn) {
@@ -351,16 +357,23 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     					//p = 0;
     					
     					if (methodNoCaseEquiproba) {
-    						warnings.add("no observation for the case "+node.name+"="+value+" given " +
+    						if (warnings.size() < MAX_WARNINGS)
+    							warnings.add("no observation for the case "+node.name+"="+value+" given " +
     									coord.entrySet().stream().map(e -> e.getKey().name+"="+e.getValue()).collect(Collectors.joining(", "))+
     									"; will assume equiprobability");
-    					
+    						else
+    							moreWarnings++;
+    						
 	    					// no case found. Hard to say :-/ 
 	    					p = 1.0/node.getDomainSize();
     					} else {
-    						warnings.add("no observation for the case "+node.name+"="+value+" given "+
+    						if (warnings.size() < MAX_WARNINGS)
+        						warnings.add("no observation for the case "+node.name+"="+value+" given "+
     								coord.entrySet().stream().map(e -> e.getKey().name+"="+e.getValue()).collect(Collectors.joining(", "))+
     								"; will keep former probabilities");
+    						else
+    							moreWarnings++;
+    						
         					p = -1;
     					}
     				} else {
@@ -403,8 +416,10 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     	for (String warn: warnings) {
     		logger.warn(warn);
     	}
+    	if (moreWarnings > 0)
+    		logger.warn("(... "+moreWarnings+" additional warnings were ignored)");
     	
-    	System.out.println(learnt.collectInvalidProblems());
+    	//System.out.println(learnt.collectInvalidProblems());
     	
     	// TODO dictionnary to map values to something else?
     	
