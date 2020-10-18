@@ -13,6 +13,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -29,7 +30,7 @@ import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.InferencePerforman
 
 public class CategoricalBayesianNetwork extends BayesianNetwork<NodeCategorical> {
 
-	protected Map<NodeCategorical,Factor> node2factor = new HashMap<>();
+	protected Map<NodeCategorical,Factor> node2factor = new ConcurrentHashMap<>();
 	
 	public CategoricalBayesianNetwork(ILogger logger, String name) {
 		super(logger, name);
@@ -143,7 +144,7 @@ public class CategoricalBayesianNetwork extends BayesianNetwork<NodeCategorical>
     	CategoricalBayesianNetwork bn = new CategoricalBayesianNetwork(logger, networkName);
 		
         // read the variables
-		Map<String,NodeCategorical> id2node = new HashMap<>();
+		Map<String,NodeCategorical> id2node = new HashMap();
 		{
 	        List<?> variables = document.selectNodes("/BIF/NETWORK/VARIABLE");
 	        for (Iterator<?> iterVars = variables.iterator(); iterVars.hasNext(); ) {
