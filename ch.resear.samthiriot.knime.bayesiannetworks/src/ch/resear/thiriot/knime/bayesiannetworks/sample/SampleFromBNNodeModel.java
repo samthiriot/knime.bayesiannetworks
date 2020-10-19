@@ -404,6 +404,7 @@ public class SampleFromBNNodeModel extends NodeModel {
     				"generation of "+countToSample+" entities on "+threadsToUse+" CPUs with method "+generationMethod
     						+ " took "+elapsedMilliSeconds+"s, that is on average "+performance+" entities/s");
     	}
+    	executorService.shutdown();
     	
         // merge
         BufferedDataTable resTable;

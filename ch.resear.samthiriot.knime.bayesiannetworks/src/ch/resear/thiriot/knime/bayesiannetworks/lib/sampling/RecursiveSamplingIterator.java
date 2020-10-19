@@ -100,13 +100,21 @@ public abstract class RecursiveSamplingIterator<R extends DoubleFunction> implem
 		}
 		engine.clearEvidence();
 		engine.addEvidence(evidence);
-		double[] probabilities = node.getDomain()
-									.stream()
-									.mapToDouble(
-											s -> engine.getConditionalProbability(node, s) // n.getConditionalProbabilityPosterior(s, evidence, alreadyComputed)
-									).toArray();
-		if (debug) {
-			logger.debug("\tprobabilities: "+java.util.Arrays.toString(probabilities));
+		double[] probabilities; 
+		try {
+			probabilities = node.getDomain()
+										.stream()
+										.mapToDouble(
+												s -> engine.getConditionalProbability(node, s) // n.getConditionalProbabilityPosterior(s, evidence, alreadyComputed)
+										).toArray();
+			if (debug) {
+				logger.debug("\tprobabilities: "+java.util.Arrays.toString(probabilities));
+			}
+		} catch (RuntimeException e) {
+			e.printStackTrace();
+			throw new RuntimeException(
+					"error when computing conditional probabilities for variable "+node+": "+e.getMessage()
+					, e);
 		}
 		if (Double.isNaN(probabilities[0])) {
 			throw new RuntimeException("unable to compute p("+n.name+"|"+evidence.entrySet().stream().map(e -> e.getKey().name+"="+e.getValue()).collect(Collectors.joining(","))+")");
@@ -121,7 +129,15 @@ public abstract class RecursiveSamplingIterator<R extends DoubleFunction> implem
 		}
 		alreadyComputedNow.put(n, node2v);
 		
-		int[] counts = getCounts(count, probabilities);
+		int[] counts;
+		try {
+			counts = getCounts(count, probabilities);
+		} catch (RuntimeException e) {
+			e.printStackTrace();
+			throw new RuntimeException(
+					"error computing the counts to generate for variable "+node+": "+e.getMessage(), 
+					e);
+		}
 		
 		/*
 		System.out.println(name);
@@ -164,30 +180,37 @@ public abstract class RecursiveSamplingIterator<R extends DoubleFunction> implem
 	@Override
 	public EntitiesAndCount next() {
 
-		if (itSub != null)
-			return itSub.next();
-		
-		Entry<String,Integer> v2c = itDomainAndCount.next();
-		String v = v2c.getKey();
-		Integer countNow = v2c.getValue();
-		
-		// explore the combinations to generate!
-		Map<NodeCategorical,String> evidenceNow = new HashMap<>(evidence);
-		evidenceNow.put(node,v);
-		
-		// maybe we are done?
-		if (remaining.isEmpty()) {
-			// we have no more node to explore :-)
-			// we are done
-			return new EntitiesAndCount(evidenceNow, countNow);
-		} else {
-			// we have to continue recursively!
-			itSub = createSubIterator(countNow, 
-					remaining.get(0), remaining.subList(1, remaining.size()),
-					evidenceNow,
-					alreadyComputedNow);
-					
-			return itSub.next();
+		try {
+			if (itSub != null)
+				return itSub.next();
+			
+			Entry<String,Integer> v2c = itDomainAndCount.next();
+			String v = v2c.getKey();
+			Integer countNow = v2c.getValue();
+			
+			// explore the combinations to generate!
+			Map<NodeCategorical,String> evidenceNow = new HashMap<>(evidence);
+			evidenceNow.put(node,v);
+			
+			// maybe we are done?
+			if (remaining.isEmpty()) {
+				// we have no more node to explore :-)
+				// we are done
+				return new EntitiesAndCount(evidenceNow, countNow);
+			} else {
+				// we have to continue recursively!
+				itSub = createSubIterator(countNow, 
+						remaining.get(0), remaining.subList(1, remaining.size()),
+						evidenceNow,
+						alreadyComputedNow);
+						
+				return itSub.next();
+			}
+		} catch (RuntimeException e) {
+			e.printStackTrace();
+			throw new RuntimeException(
+					"Error computing next recursive iterator "+e.getMessage(), 
+					e);
 		}
 		
 	}
