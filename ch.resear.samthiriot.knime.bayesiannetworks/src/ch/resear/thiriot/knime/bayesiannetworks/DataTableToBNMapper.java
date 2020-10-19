@@ -1,6 +1,6 @@
 package ch.resear.thiriot.knime.bayesiannetworks;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -34,8 +34,8 @@ public class DataTableToBNMapper {
 	
 	private DataType knimeType;
 	
-	private Map<DataCell,String> cell2string = new HashMap<>();
-	private Map<String,DataCell> string2cell = new HashMap<>();
+	private Map<DataCell,String> cell2string = new ConcurrentHashMap<>();
+	private Map<String,DataCell> string2cell = new ConcurrentHashMap<>();
 	
 	
     public static Map<NodeCategorical,DataTableToBNMapper> createMapper(

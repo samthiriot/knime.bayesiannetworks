@@ -145,6 +145,8 @@ public class BayesianNetwork<N extends AbstractNode<N>> {
 		if (logger.isDebugEnabled())
 				logger.debug("order for nodes: " + nodesEnumeration);
 	
+		nodesEnumeration = Collections.unmodifiableList(nodesEnumeration);
+		
 		return nodesEnumeration;
 	}
 	

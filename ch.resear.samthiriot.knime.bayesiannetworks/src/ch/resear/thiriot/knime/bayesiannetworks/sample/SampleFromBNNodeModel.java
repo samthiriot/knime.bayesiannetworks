@@ -235,10 +235,15 @@ public class SampleFromBNNodeModel extends NodeModel {
 	        		exec.setProgress(progress);
 	        	}
 	        	
-	        	EntitiesAndCount next = it.next();
-	        	done += next.count;
-	        	totalRowsGenerated += next.count;
-	        	
+	        	EntitiesAndCount next;
+	        	try {
+		        	next = it.next();
+		        	done += next.count;
+		        	totalRowsGenerated += next.count;
+	        	} catch (RuntimeException e) {
+	        		e.printStackTrace();
+	        		throw new RuntimeException("Error when sampling the next entity: "+e.getMessage(), e);
+	        	}
 	        	//System.out.println(next);
 	        	
 	        	if (!nostorage) {
