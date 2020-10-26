@@ -807,7 +807,6 @@ public final class NodeCategorical extends FiniteNode<NodeCategorical> {
 		} else {
 			// if parents: 
 			List<NodeCategorical> parentsLR = new ArrayList<>(parentsL);
-			Collections.reverse(parentsLR);
 			IteratorCategoricalVariables it = cNetwork.iterateDomains(parentsLR);
 			Map<NodeCategorical,String> previous = null;
 			// open all parenthesis
@@ -826,7 +825,11 @@ public final class NodeCategorical extends FiniteNode<NodeCategorical> {
 				} 
 				previous = n2s;
 
-				sb.append(domain.stream().map(n -> Double.toString(getProbability(n, n2s))).collect(Collectors.joining(" ")));
+				sb.append(
+						domain.stream()
+							  .map(n -> Double.toString(getProbability(n, n2s)))
+							  .collect(Collectors.joining(" "))
+						);
 			}	
 			// close all parenthesis
 			for (NodeCategorical p: parentsL)
