@@ -158,9 +158,6 @@ public class ComputeProbaNodeModel extends NodeModel {
     	// create specs
         DataTableSpec outputSpec = createSpecsForTable(sample.getDataTableSpec());
         BufferedDataContainer container = exec.createDataContainer(outputSpec);
-
-        // useless
-        final RandomEngine random = new MersenneTwister();
         
         EliminationInferenceEngine engine = new EliminationInferenceEngine(
         		ilogger, 

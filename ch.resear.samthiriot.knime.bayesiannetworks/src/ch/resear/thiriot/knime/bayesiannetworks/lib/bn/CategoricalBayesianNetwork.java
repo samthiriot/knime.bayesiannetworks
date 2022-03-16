@@ -144,7 +144,7 @@ public class CategoricalBayesianNetwork extends BayesianNetwork<NodeCategorical>
     	CategoricalBayesianNetwork bn = new CategoricalBayesianNetwork(logger, networkName);
 		
         // read the variables
-		Map<String,NodeCategorical> id2node = new HashMap();
+		Map<String,NodeCategorical> id2node = new HashMap<>();
 		{
 	        List<?> variables = document.selectNodes("/BIF/NETWORK/VARIABLE");
 	        for (Iterator<?> iterVars = variables.iterator(); iterVars.hasNext(); ) {

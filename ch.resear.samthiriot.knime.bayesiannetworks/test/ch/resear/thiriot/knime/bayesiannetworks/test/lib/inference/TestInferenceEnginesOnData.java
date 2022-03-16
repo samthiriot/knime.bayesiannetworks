@@ -467,7 +467,7 @@ public class TestInferenceEnginesOnData {
 
 
 	
-	@Test(timeout=40000)
+	@Test(timeout=50000)
 	public void testGenerate() {
 		
 		ie.clearEvidence();

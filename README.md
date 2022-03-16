@@ -65,3 +65,29 @@ In this example ([download it](./doc/example_augment_data.knwf)), we show:
 ![example of data fusion](./doc/screenshot_augment_data.png)
 
 
+# developers' corner 
+
+## set up development environment 
+
+* set up a development environment for a KNIME plugin as ![in the KNIME documentation](https://docs.knime.com/latest/analytics_platform_new_node_quickstart_guide/index.html#_introduction). This involves to ![set up the KNIME SDK](https://github.com/knime/knime-sdk-setup)
+* clone this repository, then import it as Java projects into Eclipse
+* download jar dependancies: run the "maven copy dependancies into lib.launch"
+
+test the code without KNIME:
+* directory "test", run as... JUnit. This should heat your CPU a bit but should end with green lights (timeouts are acceptable as they depend on the test cases and your configuration). Solve dependancy issues.
+
+test the plugin inside KNIME:
+* right click on knime-sdk-setup, run as... run configurations... KNIME Analytics
+* the "Bayesian Networks" logo should be part of the splash screen
+* the "Bayesian networks" section should be visible in the "community" family
+* create a new KNIME workflow 
+
+
+
+## typical questions
+
+Par of dependancies are managed by Maven. Yet they are packaged as libs in the plugin:
+* maven dependancies are in pom.xml
+* refresh the maven dependancies
+* then run the "copy maven dependancies into lib"
+* then ensure all these libs are both in the plugin.xml imports but also in the build path 

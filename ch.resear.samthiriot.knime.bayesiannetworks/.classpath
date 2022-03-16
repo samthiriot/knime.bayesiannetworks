@@ -6,6 +6,7 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-collections4-4.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/bcmail-jdk14-138.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/bcprov-jdk14-138.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/colt-1.2.0.jar"/>
@@ -17,20 +18,24 @@
 	<classpathentry exported="true" kind="lib" path="lib/gs-core-1.3.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/hamcrest-core-1.3.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/itext-2.1.5.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/jaxen-1.2.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/jcommon-1.0.17.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/jfreechart-1.0.14.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/junit-4.12.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/mbox2-1.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/pherd-1.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/xml-apis-1.0.b2.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/xml-apis-1.3.04.jar"/>
-	<classpathentry including="**/*.java|**/*.png|**/*.svg|**/*.xml" kind="src" path="src">
+	<classpathentry including="**/*.java" kind="src" output="target/classes" path="src">
 		<attributes>
 			<attribute name="optional" value="true"/>
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry including="**/*.java" kind="src" path="test"/>
-	<classpathentry kind="output" path="bin"/>
+	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry exported="true" kind="lib" path="lib/jaxen-1.2.0.jar"/>
+	<classpathentry kind="output" path="target/classes"/>
 </classpath>
