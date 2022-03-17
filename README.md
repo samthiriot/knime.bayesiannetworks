@@ -84,10 +84,15 @@ test the plugin inside KNIME:
 
 
 
-## typical questions
+## frequent questions
 
 Par of dependancies are managed by Maven. Yet they are packaged as libs in the plugin:
 * maven dependancies are in pom.xml
 * refresh the maven dependancies
 * then run the "copy maven dependancies into lib"
 * then ensure all these libs are both in the plugin.xml imports but also in the build path 
+
+
+## export the plugin
+
+See https://github.com/samthiriot/knime.updatesite
