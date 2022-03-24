@@ -204,22 +204,34 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
 		
     	// iterate each row of data, and learn the count to later fill in the BN
     	Iterator<DataRow> itRows = sample.iterator();
-    	
-    	Set<NodeCategorical> failedNodes = new HashSet<NodeCategorical>();
-    	
+        	
     	final long timestart = System.currentTimeMillis();
     	
     	InferencePerformanceUtils.singleton.reset();
 
     	long rowIdx = 0;
+        long entitiesPerSecond = -1;
+        
     	while (itRows.hasNext()) {
     	
 		    // check if the execution monitor was canceled
             exec.checkCanceled();
-            exec.setProgress(
-            		(double)(rowIdx + 1) / sample.size(), 
-            		"augmenting row " + rowIdx);
-        
+
+            // from time to time, try to update the count of entities per sec
+            if (rowIdx % 100 == 0)
+            	try {
+            		entitiesPerSecond = rowIdx / ( (System.currentTimeMillis() - timestart) / 1000);
+            	} catch (java.lang.ArithmeticException e) { }
+            
+            if (entitiesPerSecond < 0)
+	            exec.setProgress(
+	            		(double)(rowIdx + 1) / sample.size(), 
+	            		"augmenting row " + rowIdx);
+            else
+            	exec.setProgress(
+	            		(double)(rowIdx + 1) / sample.size(), 
+	            		"augmenting row " + rowIdx + " ("+entitiesPerSecond+"/s)");
+            
             DataRow row = itRows.next();
         	
     		// add evidence from the row
@@ -260,7 +272,6 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
     			
     		}
     		
-    		
     		// add the novel values
     		for (NodeCategorical nodeToAdd: nodeToAdd2idx.keySet()) {
     			int idxRes = nodeToAdd2idx.get(nodeToAdd);
@@ -277,7 +288,6 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
 	        			)
         			);
     		
-
     		rowIdx++;
     	}
     	
