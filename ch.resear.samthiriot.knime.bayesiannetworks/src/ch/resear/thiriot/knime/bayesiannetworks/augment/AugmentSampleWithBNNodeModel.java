@@ -39,8 +39,10 @@ import ch.resear.thiriot.knime.bayesiannetworks.LogIntoNodeLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.AbstractInferenceEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.EliminationInferenceEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.InferencePerformanceUtils;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.RecursiveConditionningEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortObject;
 
 
@@ -114,32 +116,46 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
     	exec.setMessage("preparing mappings");
 
     	// define what we will add as columns
+    	Map<String,NodeCategorical> name2node = new HashMap<>();
+
     	Map<NodeCategorical,DataTableToBNMapper> node2mapper = DataTableToBNMapper.createMapper(bn, ilogger);
     	
+    	// there are columns in the table which match nodes of the BN: we can use them for evidence (even if some will be missing)
     	List<NodeCategorical> nodesForEvidence = new LinkedList<>();
+    	// there are nodes in the BN which do not match any column of the BN: we will add them as things to generate
     	List<NodeCategorical> nodesToAdd = new LinkedList<>();
     	Map<NodeCategorical,Integer> nodeEvidence2idx = new HashMap<>(); 
+    	Map<Integer,NodeCategorical> idx2nodeEvidence = new HashMap<>(); 
+
     	Map<NodeCategorical,Integer> nodeToAdd2idx = new HashMap<>(); 
 
     	for (NodeCategorical n: bn.enumerateNodes()) {
     		
+    		name2node.put(n.getName(), n);
+    		
     		if (sample.getDataTableSpec().containsName(n.getName())) {
+    			// this node matches a column with is already in the table
+    			// is the domain of the table the same as the one of the node?
+    			// TODO
     			nodesForEvidence.add(n);
+    			// TODO factorize
     			nodeEvidence2idx.put(n, sample.getDataTableSpec().findColumnIndex(n.getName()));
+    			idx2nodeEvidence.put(sample.getDataTableSpec().findColumnIndex(n.getName()), n);
     		} else {
     			nodesToAdd.add(n);
     			nodeToAdd2idx.put(n, sample.getDataTableSpec().getColumnNames().length + nodeToAdd2idx.size());
     		}
     	}
     	
-
+    	// no quick leave: maybe there are missing values!
+    	/*
     	if (nodesToAdd.isEmpty()) {
     		String w = "we found no variable in the Bayesian network which would miss in the table. The node will just return the input table.";
     		setWarningMessage(w);
     		logger.warn(w);
     		return new BufferedDataTable[]{sample};
     	}
-    	
+    	*/
 
     	if (nodesForEvidence.isEmpty()){
     		logger.warn("we found no column in the table matching the names of variable in the Bayesian network. So the additional columns will be purely random, and independant of the columns of the input table.");
@@ -179,10 +195,12 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
         
         final RandomEngine random = new MersenneTwister(seed);
         
+        // TODO automatic selection?
         // TODO ?final AbstractInferenceEngine engine = new BestInferenceEngine(ilogger, random, bn);
-        EliminationInferenceEngine engine = new EliminationInferenceEngine(ilogger, random, bn);
-        //AbstractInferenceEngine engine = new RecursiveConditionningEngine(ilogger, random, bn);
-
+        
+        //EliminationInferenceEngine engine = new EliminationInferenceEngine(ilogger, random, bn); NO not good for reverse!
+        AbstractInferenceEngine engine = new RecursiveConditionningEngine(ilogger, random, bn);
+        
 		
     	// iterate each row of data, and learn the count to later fill in the BN
     	Iterator<DataRow> itRows = sample.iterator();
@@ -193,8 +211,7 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
     	
     	InferencePerformanceUtils.singleton.reset();
 
-    	// TODO manage long!!!
-    	int rowIdx = 0;
+    	long rowIdx = 0;
     	while (itRows.hasNext()) {
     	
 		    // check if the execution monitor was canceled
@@ -217,15 +234,32 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
     		}
     		engine.compute();
     		//System.err.println("p(evidence): "+engine.getProbabilityEvidence());
-    		
-    		// copy the past results
-    		DataCell[] results = new DataCell[row.getNumCells()+nodesToAdd.size()];
-    		for (int j=0; j<row.getNumCells(); j++) {
-    			results[j] = row.getCell(j);
-    		}
-    		
+    	
     		Map<NodeCategorical,String> generated = engine.sampleOne();
     		engine.clearEvidence();
+    		
+    		// copy the past content of the table
+    		DataCell[] results = new DataCell[row.getNumCells()+nodesToAdd.size()];
+    		for (int j=0; j<row.getNumCells(); j++) {
+    			
+    			if (row.getCell(j).isMissing()) {
+    				// the content is missing
+    				
+    				NodeCategorical n = idx2nodeEvidence.get(j);
+    				if (n != null) {
+    					// and also we have a corresponding node so we might complete it
+    					results[j] = node2mapper.get(n).createCellForStringValue(generated.get(n));
+    					// end of the processing here :-)
+    					continue;
+    				}
+   
+    			} 
+    			
+    			// copy the past result
+    			results[j] = row.getCell(j);	
+    			
+    		}
+    		
     		
     		// add the novel values
     		for (NodeCategorical nodeToAdd: nodeToAdd2idx.keySet()) {
