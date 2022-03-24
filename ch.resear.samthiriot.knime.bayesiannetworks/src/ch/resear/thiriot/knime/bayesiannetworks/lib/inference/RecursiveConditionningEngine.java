@@ -153,7 +153,11 @@ public class RecursiveConditionningEngine extends AbstractInferenceEngine {
 			} else {
 				Map<NodeCategorical,String> n2v = new HashMap<>(evidenceVariable2value);
 				n2v.put(n, v);
-				p = getDtreeWithEvidence().recursiveConditionning(n2v) / getProbabilityEvidence();
+				try {
+					p = getDtreeWithEvidence().recursiveConditionning(n2v) / getProbabilityEvidence();
+				} catch (ArithmeticException e) {
+					throw new RuntimeException("error during the recursive conditioning of p("+n.name+"="+v+")", e);
+				}
 			}
 			res[i] = p;
 			total += p;
