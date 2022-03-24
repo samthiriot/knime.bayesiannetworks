@@ -244,10 +244,19 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
 	    					node2mapper.get(nodeForEvidence).getStringValueForCell(val)
 	    					);
     		}
-    		engine.compute();
-    		//System.err.println("p(evidence): "+engine.getProbabilityEvidence());
+    		try {
+    			engine.compute();
+        	} catch (java.lang.ArithmeticException e) { 
+        		throw new RuntimeException("error when running the inference engine for row "+row.toString(), e);
+        	}
+			//System.err.println("p(evidence): "+engine.getProbabilityEvidence());
     	
-    		Map<NodeCategorical,String> generated = engine.sampleOne();
+    		Map<NodeCategorical,String> generated = null;
+    		try {
+    			generated = engine.sampleOne();
+        	} catch (java.lang.ArithmeticException e) { 
+        		throw new RuntimeException("error when sampling for row "+row.toString(), e);
+        	}
     		engine.clearEvidence();
     		
     		// copy the past content of the table
