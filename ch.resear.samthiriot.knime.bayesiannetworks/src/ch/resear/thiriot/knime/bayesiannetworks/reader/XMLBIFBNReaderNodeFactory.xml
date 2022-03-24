@@ -18,12 +18,13 @@
         This format is documented <a href="http://www.cs.cmu.edu/afs/cs/user/fgcozman/www/Research/InterchangeFormat/">on the website of the Carnegie Mellon University</a>.  
         
         <p>
-        You might create your Bayesian networks with any graphical editor such as:
+        You might create your <a href="https://en.wikipedia.org/wiki/Bayesian_network">Bayesian Network</a> with any graphical editor such as:
         <a href="http://reasoning.cs.ucla.edu/samiam/index.php?s=">the good old SamIam</a>
 		</p>
+		
 		<p>
-        Go there to <a href="https://github.com/samthiriot/knime-shapefiles-as-WKT/issues">report bugs or ask for features</a>
-        </p>
+		Please report bugs or feature demands in <a href="https://github.com/samthiriot/knime.bayesiannetworks/issues">the github page</a>.
+		</p>
         .</intro>
         
         <option name="file">the file to read</option>

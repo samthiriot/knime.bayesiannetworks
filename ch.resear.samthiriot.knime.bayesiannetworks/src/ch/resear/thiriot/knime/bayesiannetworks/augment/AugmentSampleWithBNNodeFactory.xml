@@ -13,7 +13,7 @@
     
     <fullDescription>
         <intro>
-        Adds columns to the table by adding all the variables of the Bayesian network which are not yet columns of the datatable. 
+        Adds columns to the table by adding all the variables of the <a href="https://en.wikipedia.org/wiki/Bayesian_network">Bayesian Network</a> which are not yet columns of the datatable. 
         To generate the values of the additional columns, the node will try to find all the column names which match the 
         name of a variable of the Bayesian network, and will use them as evidence to condition the probabilities of the 
         missing columns with the ones of the existing ones.
@@ -32,9 +32,13 @@
         
         <p>
         The random numbers are generated using the <a href="https://dst.lbl.gov/ACSSoftware/colt/">Colt library</a> 
-        (see <a href="https://en.wikipedia.org/wiki/Colt_(libraries)">the wikipedia page</a>) published by CERN. 
+        (see <a href="https://en.wikipedia.org/wiki/Colt_(libraries)">the wikipedia page</a>) published by <a href="https://home.cern/">CERN</a>. 
 		</p>
 
+		<p>
+		Please report bugs or feature demands in <a href="https://github.com/samthiriot/knime.bayesiannetworks/issues">the github page</a>.
+		</p>
+		
         </intro>
         
         <option name="Seed">Enables you to freeze the Random Number Generator used to sample. 

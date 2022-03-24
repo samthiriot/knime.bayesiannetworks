@@ -16,6 +16,9 @@
         Creates an empty Bayesian network.
         .</intro>
   
+		<p>
+		Please report bugs or feature demands in <a href="https://github.com/samthiriot/knime.bayesiannetworks/issues">the github page</a>.
+		</p>
     </fullDescription>
     
     <ports>
