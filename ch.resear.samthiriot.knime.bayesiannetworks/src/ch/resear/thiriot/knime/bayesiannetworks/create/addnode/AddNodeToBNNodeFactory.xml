@@ -8,25 +8,129 @@
     <name>Add Node to BN</name>
     
     <shortDescription>
-		Adds a node to the Bayesian Network using the input table 
+		Adds a node to a Bayesian Network using the input table 
     </shortDescription>
     
     <fullDescription>
         <intro>
-        Adds a node to the Bayesian Network using the input table.
-        <br/>
-        In this first version, the input table should only contain the relevant columns.
-        It will create a node p(V=vi|P1=p1,P2=p2...)=pi with: 
-        V the name of the first column; 
-        vi the values of the first column; 
-        Pj the names of the other columns;
-        pjt the contents of the next columns
-        the last column should contain the double value with the probability.
-        </intro>
+        Adds a node to a <a href="https://en.wikipedia.org/wiki/Bayesian_network">Bayesian Network</a> 
+        using the input table which describes its <a href="https://en.wikipedia.org/wiki/Conditional_probability_table">Conditional Probability Table</a>.
         
-        <option name="accept multiple occurences">if the table is the result of a group by, should be false. 
-        				Check it if the node should accept several times the same combinations</option>
+        <p>
+        The input table should only contain the content necessary for the creation of the Bayesian Network Node, that is a Conditional Probability Table.
+        Columns should be in the right order. Use nodes to filter and sort columns if necessary.
+        <ul>
+         <li>The <b>first column</b> contains the modalities of the variable to be created. 
+        The title of the column defines the <b>name of the variable</b> in the Bayesian network. 
+        It should contain categorical data (string, integer...).</li>
+        <li>The <b>last column</b> contains the probabilities. 
+        It should be numeric, and will be normalized to be treated as probabilities.</li>
+        <li>All <b>the columns inbetween</b> will be interpreted as <b>dependent variables</b>.
+       	They should contain categorical data (String, integer, long...). </li>
+        </ul>
+		</p>
+		
+		<p>      
+	    When the node is added to the Bayesian network, if the names of dependent variables already exist in the 
+	    Bayesian network, they will be connected in the network (and the modalities should be the same).
+	    Else the variable is created from scratch with an hypothesis of equiprobability. 
+	    </p>
+	
+		<p>    
+		In this first example of input table, we provide a Conditional Probability Table 
+	    which defines a node <tt>p(gender)</tt> without dependent variable.
+	    </p>
+   	    <table>
+		  <tr>
+		    <th>gender</th>
+		    <th>p</th>
+		  </tr>
+		  <tr>
+		    <td>male</td>
+		    <td>0.55</td>
+		  </tr>
+		  <tr>
+		    <td>female</td>
+		    <td>0.45</td>
+		  </tr>
+		</table>
+		<p>
+		It will be interpreted as:
+   	    </p>		
+	<pre>
+	p( gender=male ) = 0.55
+	p( gender=female ) = 0.45
+	</pre>
+			
+		<p>    
+		In this second example of input table, we provide a Conditional Probability Table 
+	    which defines a node <tt>p(age|gender)</tt> which defines the variable <tt>age</tt> with dependent variable <tt>gender</tt>.
+   	   	</p>
+   	    <table>
+		  <tr>
+		    <th>age</th>
+		    <th>gender</th>
+		    <th>p</th>
+		  </tr>
+		  <tr>
+		    <td>baby</td>
+		    <td>male</td>
+		    <td>12</td>
+		  </tr>
+		  <tr>
+		    <td>teen</td>
+		    <td>male</td>
+		    <td>21</td>
+		  </tr>
+		  <tr>
+		    <td>adult</td>
+		    <td>male</td>
+		    <td>65</td>
+		  </tr>
+		  <tr>
+		    <td>baby</td>
+		    <td>female</td>
+		    <td>10</td>
+		  </tr>
+		  <tr>
+		    <td>teen</td>
+		    <td>female</td>
+		    <td>17</td>
+		  </tr>
+		  <tr>
+		    <td>adult</td>
+		    <td>female</td>
+		    <td>72</td>
+		  </tr>		  
+		</table>
+		<p>
+		If the input Bayesian network does not already contains a variable named <tt>gender</tt>, this variable will be created with equiprobability.
+		The dependent node <tt>p(age|gender)</tt> will be defined after normalization, as follows:
+		</p>
+	<pre>
+	p( gender )
+	p( gender=male ) = 0.5
+	p( gender=female ) = 0.5
+	
+	p( age | gender )
+	p( age=baby | gender=male ) = 0.12244897959183673
+	p( age=baby | gender=female ) = 0.10101010101010101
+	p( age=teen | gender=male ) = 0.21428571428571427
+	p( age=teen | gender=female ) = 0.1717171717171717
+	p( age=adult | gender=male ) = 0.6632653061224489
+	p( age=adult | gender=female ) = 0.7272727272727273
+	</pre>
+
+		<p>
+		Please report bugs or feature demands in <a href="https://github.com/samthiriot/knime.bayesiannetworks/issues">the github page</a>.
+		</p>
+		
+	    </intro>
+	    
         
+        <option name="accept multiple occurences">If checked, the same combinations might be provided several times. 
+        				Uncheck it if the table is the result of a group by, should be false. </option>
+       
     </fullDescription>
     
     <ports>
@@ -35,6 +139,7 @@
         
         <outPort index="0" name="Bayesian network">Bayesian network with the additional node</outPort>
         
-    </ports>    
+    </ports>
+    
     
 </knimeNode>
