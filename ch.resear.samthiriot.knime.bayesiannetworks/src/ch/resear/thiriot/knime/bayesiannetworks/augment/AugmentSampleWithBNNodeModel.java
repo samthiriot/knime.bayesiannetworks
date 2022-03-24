@@ -277,8 +277,7 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
     			} 
     			
     			// copy the past result
-    			results[j] = row.getCell(j);	
-    			
+    			results[j] = row.getCell(j);	    			
     		}
     		
     		// add the novel values
