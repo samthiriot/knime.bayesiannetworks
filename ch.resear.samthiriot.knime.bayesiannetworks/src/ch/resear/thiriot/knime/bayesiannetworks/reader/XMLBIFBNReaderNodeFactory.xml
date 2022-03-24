@@ -13,12 +13,12 @@
     
     <fullDescription>
         <intro>
-        Read a Bayesian network stored in XML BIF format. 
+        Read a <a href="https://en.wikipedia.org/wiki/Bayesian_network">Bayesian network</a> stored in XML BIF format. 
         This format is used by platforms such as WEKA, and graphical editors such as JavaBayes, Genie and Netica or Samiam. 
         This format is documented <a href="http://www.cs.cmu.edu/afs/cs/user/fgcozman/www/Research/InterchangeFormat/">on the website of the Carnegie Mellon University</a>.  
         
         <p>
-        You might create your <a href="https://en.wikipedia.org/wiki/Bayesian_network">Bayesian Network</a> with any graphical editor such as:
+        You might create your Bayesian network with any graphical editor such as:
         <a href="http://reasoning.cs.ucla.edu/samiam/index.php?s=">the good old SamIam</a>
 		</p>
 		

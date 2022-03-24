@@ -13,12 +13,13 @@
     
     <fullDescription>
         <intro>
-        Creates an empty Bayesian network.
-        .</intro>
-  
+        Creates an empty <a href="https://en.wikipedia.org/wiki/Bayesian_network">Bayesian network</a>.
+        
 		<p>
 		Please report bugs or feature demands in <a href="https://github.com/samthiriot/knime.bayesiannetworks/issues">the github page</a>.
 		</p>
+        </intro>
+  
     </fullDescription>
     
     <ports>
