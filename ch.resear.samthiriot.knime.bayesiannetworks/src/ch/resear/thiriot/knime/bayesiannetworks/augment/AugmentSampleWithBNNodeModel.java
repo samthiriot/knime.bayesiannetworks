@@ -135,11 +135,11 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
     		if (sample.getDataTableSpec().containsName(n.getName())) {
     			// this node matches a column with is already in the table
     			// is the domain of the table the same as the one of the node?
-    			// TODO
+    			// TODO check that?
     			nodesForEvidence.add(n);
-    			// TODO factorize
-    			nodeEvidence2idx.put(n, sample.getDataTableSpec().findColumnIndex(n.getName()));
-    			idx2nodeEvidence.put(sample.getDataTableSpec().findColumnIndex(n.getName()), n);
+    			final int idx = sample.getDataTableSpec().findColumnIndex(n.getName());
+    			nodeEvidence2idx.put(n, idx);
+    			idx2nodeEvidence.put(idx, n);
     		} else {
     			nodesToAdd.add(n);
     			nodeToAdd2idx.put(n, sample.getDataTableSpec().getColumnNames().length + nodeToAdd2idx.size());

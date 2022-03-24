@@ -18,6 +18,42 @@
         name of a variable of the Bayesian network, and will use them as evidence to condition the probabilities of the 
         missing columns with the ones of the existing ones.
         
+        <p>For instance, if the input table contains this data:</p>
+        <table>
+		  <tr>
+		    <th>age</th>
+		    <th>gender</th>
+		  </tr>
+		  <tr>
+		    <td>baby</td>
+		    <td>male</td>
+		  </tr>
+		  <tr>
+		    <td>teen</td>
+		    <td>?</td>
+		  </tr>
+		  <tr>
+		    <td>adult</td>
+		    <td>?</td>
+		  </tr>
+		  <tr>
+		    <td>baby</td>
+		    <td>female</td>
+		  </tr>
+		  <tr>
+		    <td>?</td>
+		    <td>female</td>
+		  </tr>
+		  <tr>
+		    <td>adult</td>
+		    <td>?</td>
+		  </tr>		  
+		</table>
+		<p>and if the Bayesian network describes probabilities <tt>p(age,gender,location)</tt>, then the 
+		node will replace the missing values in the table, and add the additional column <tt>location</tt>, 
+		by sampling randomly (according to the Bayesian network probabilities).
+		</p>
+		
         <p>
         Computing time depends on the size of the Bayesian network: size of the Conditional Probability Tables, 
         count of them. 
