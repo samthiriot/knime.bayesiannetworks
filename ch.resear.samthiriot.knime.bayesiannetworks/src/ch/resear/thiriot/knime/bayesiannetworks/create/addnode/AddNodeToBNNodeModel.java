@@ -123,9 +123,12 @@ public class AddNodeToBNNodeModel extends NodeModel {
     		throw new IllegalArgumentException("The second input should be a data table", e);
     	}
     	final BufferedDataTable sample = sampleRead;
-    	
+    	    	
+    	// check parameters
+    	if (sampleRead.getDataTableSpec().getNumColumns() < 2) 
+        	throw new InvalidSettingsException("Expects as an input a table with two columns or more. Please refer to the node's documentation.");
+    
     	// TODO read parameters to know which columns to select!
-    	
     	// for now we make it deterministic.
     	final int idxColDomain = 0;
     	DataColumnSpec specColVariable = sampleRead.getDataTableSpec().getColumnSpec(idxColDomain);
@@ -144,7 +147,7 @@ public class AddNodeToBNNodeModel extends NodeModel {
     	
         exec.setProgress(0, "creating the variable");
         
-        // create the new variable (TODO ensure it does not exist already?)
+        // create the new variable
         NodeCategorical newNode = new NodeCategorical(bn, specColVariable.getName());
 
         List<String> createdDependantVariablesNames = new LinkedList<String>();
@@ -199,7 +202,7 @@ public class AddNodeToBNNodeModel extends NodeModel {
 		    // check if the execution monitor was canceled
             exec.checkCanceled();
             exec.setProgress(
-            		(double)(rowIdx + 1) / sample.size());
+            		0.95 * (double)(rowIdx + 1) / sample.size());
         
             DataRow row = itRows.next();
         	
@@ -232,7 +235,7 @@ public class AddNodeToBNNodeModel extends NodeModel {
 
 
     	// try to normalize
-        exec.setProgress(100, "normalizing");
+        exec.setProgress(95, "normalizing");
     	newNode.normalize();
     	
         exec.setProgress(100, "done");
