@@ -13,18 +13,32 @@
     
     <fullDescription>
         <intro>
-        For a given Bayesian network, learns the conditional probabilities from a given sample.
-        <br />
-        In practice, it is often recommanded to add a constant of +1 to the measured counts. 
+        For a given <a href="https://en.wikipedia.org/wiki/Bayesian_network">Bayesian network</a>, 
+        learns the conditional probabilities from a given sample.
+        This does not learn the structure but only the "content" of the network.
+       
+       <p>
+        In practice, it is often recommended to add a constant of +1 to the measured counts. 
 		This reduces the problem of zero cells, in which zero cells might happen because the sample
 		was to small, not because it is structurally impossible to see the case in reality.
 		This also smoothes the sampling effect in general. 
 		Yet it also adds a bias in the measure.
         You might add such a constant using the smoothing constant parameter which 
         is defined by default at 0.
-        </intro>
+        </p>
+        
+		<p>
+		Please report bugs or feature demands in <a href="https://github.com/samthiriot/knime.bayesiannetworks/issues">the github page</a>.
+		</p>
+		</intro>
         
         <option name="Smoothing constant">constant to add to the count found in the actual sample (default to 0)</option>
+        <option name="Data contains a weight column">if your data contains a weight, then check it</option>
+        <option name="Weight column">select the column containing the weight (should be numeric)</option>
+        <option name="deal with no case">How should we deal with "empty" cases, that is combinations do not exist in the sample? 
+        One option is to keep the probabilities of the input network, the other is to assume equiprobability.</option>
+        
+        
     </fullDescription>
     
     <ports>

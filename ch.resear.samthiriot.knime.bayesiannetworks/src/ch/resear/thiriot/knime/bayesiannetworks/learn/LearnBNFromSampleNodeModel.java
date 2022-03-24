@@ -407,7 +407,7 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     		
         	//System.err.println(node.collectInvalidityReasons());
 
-    		System.out.println(node.asFactor().toStringLong());
+    		//System.out.println(node.asFactor().toStringLong());
     	}
     	
     	exec.checkCanceled();
@@ -420,8 +420,6 @@ public class LearnBNFromSampleNodeModel extends NodeModel {
     		logger.warn("(... "+moreWarnings+" additional warnings were ignored)");
     	
     	//System.out.println(learnt.collectInvalidProblems());
-    	
-    	// TODO dictionnary to map values to something else?
     	
         // once we are done, we return the novel BN
 		return new BayesianNetworkPortObject[] { 
