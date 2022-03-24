@@ -1,8 +1,8 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: ReadBNFromXMLBIF-Node extension for KNIME Workbench
+Bundle-Name: Bayesian Networks for KNIME
 Bundle-SymbolicName: ch.resear.thiriot.knime.bayesiannetworks.plugin;singleton:=true
-Bundle-Version: 1.3.5.qualifier
+Bundle-Version: 1.3.6.qualifier
 Bundle-ClassPath: .,
  readbnfromxmlbif.jar,
  lib/bcmail-jdk14-138.jar,
@@ -24,7 +24,7 @@ Bundle-ClassPath: .,
  lib/commons-collections4-4.4.jar,
  lib/dom4j-2.1.3.jar
 Bundle-Activator: ch.resear.thiriot.knime.bayesiannetworks.BayesianNetworkPlugin
-Bundle-Vendor: Samuel Thiriot
+Bundle-Vendor: EIFER (European Institute for Energy Research)
 Require-Bundle: org.eclipse.core.runtime,
  org.knime.workbench.core;bundle-version="4.2.0",
  org.knime.workbench.repository,
