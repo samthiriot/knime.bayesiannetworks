@@ -111,8 +111,7 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
     			logger.info("the seed was converted from long "+m_seed.getLongValue()+" to int "+seed+"; this should have no impact for you");
     	} else 
     		seed = (int)System.currentTimeMillis();
-    	
-    	
+    	    	
     	exec.setMessage("preparing mappings");
 
     	// define what we will add as columns
@@ -156,7 +155,8 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
     		return new BufferedDataTable[]{sample};
     	}
     	*/
-
+    	
+    	
     	if (nodesForEvidence.isEmpty()){
     		logger.warn("we found no column in the table matching the names of variable in the Bayesian network. So the additional columns will be purely random, and independant of the columns of the input table.");
     		logger.warn("the Bayesian network contains as variable names: "+bn.getNodes().stream().map(n -> n.name).collect(Collectors.joining(",")));
@@ -301,7 +301,8 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
     	
     	final long timeend = System.currentTimeMillis();
     	final long durationms = (timeend - timestart);
-    	logger.info("inference took "+(durationms/sample.size())+"ms per line");
+    	if (sample.size() > 0)
+    		logger.info("inference took "+(durationms/sample.size())+"ms per line");
     	
     	InferencePerformanceUtils.singleton.display(ilogger);
     	
