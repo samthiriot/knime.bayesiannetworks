@@ -54,6 +54,7 @@ import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.ForwardSamplingIter
 import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.MultinomialRecursiveSamplingIterator;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.RoundAndSampleRecursiveSamplingIterator;
 import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortObject;
+import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortSpec;
 
 
 /**
@@ -149,8 +150,29 @@ public class SampleFromBNNodeModel extends NodeModel {
 
     @Override
 	protected PortObjectSpec[] configure(PortObjectSpec[] inSpecs) throws InvalidSettingsException {
-	
-        return new DataTableSpec[]{null};
+    	
+    	BayesianNetworkPortSpec specBN = (BayesianNetworkPortSpec) inSpecs[0];
+    	
+    	if (specBN != null) {
+    		
+        	Map<String,DataTableToBNMapper> node2mapper = DataTableToBNMapper.createMapper(specBN, ilogger);
+
+        	List<DataColumnSpec> specs = new LinkedList<DataColumnSpec>();
+        	for (String nodeName: specBN.getVariableNames()) {
+        		
+        		specs.add(node2mapper.get(nodeName).getSpecForNode());
+        	}
+        	
+        	if (m_groupRows.getBooleanValue() && 
+        			!m_generationMethod.getStringValue().equals(ForwardSamplingIterator.GENERATION_METHOD_NAME))
+        		specs.add(new DataColumnSpecCreator("count", IntCell.TYPE).createSpec());
+        	
+        	DataColumnSpec[] specsArray = specs.toArray(new DataColumnSpec[specs.size()]);
+        	
+    		return new DataTableSpec[]{ new DataTableSpec(specsArray) };
+
+    	} else 
+    		return new DataTableSpec[]{null};
 
 	}
     

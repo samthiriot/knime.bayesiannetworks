@@ -14,19 +14,22 @@
     
     <fullDescription>
         <intro>
-        Using a Bayesian network which describes densities of probabilities, 
+        Using a <a href="https://en.wikipedia.org/wiki/Bayesian_network">Bayesian Network</a>  which describes densities of probabilities, 
         this node adds a column to a data table which contains the probability of the values 
         found in the columns which match variables in the Bayesian network. 
-        <br/>
-        Go there to <a href="https://github.com/samthiriot/knime-shapefiles-as-WKT/issues">report bugs or ask for features</a>
-        </intro>
+       
+     	<p>
+		Please report bugs or feature demands in <a href="https://github.com/samthiriot/knime.bayesiannetworks/issues">the github page</a>.
+		</p>
+		</intro>
+		
         <option name="column name">Name of the column to append</option>
     
     </fullDescription>
     
     <ports>
         <inPort index="0" name="sample">a data table</inPort>
-        <inPort index="0" name="Bayesian network">a Bayesian network</inPort>
+        <inPort index="1" name="Bayesian network">a Bayesian network</inPort>
         <outPort index="0" name="sample">data table with probabilities</outPort>
     </ports>    
 </knimeNode>

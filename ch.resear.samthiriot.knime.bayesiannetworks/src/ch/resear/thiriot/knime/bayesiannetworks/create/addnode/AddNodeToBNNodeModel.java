@@ -67,12 +67,20 @@ public class AddNodeToBNNodeModel extends NodeModel {
     @Override
 	protected PortObjectSpec[] configure(PortObjectSpec[] inSpecs) throws InvalidSettingsException {
 	
+    	BayesianNetworkPortSpec specBN = (BayesianNetworkPortSpec)inSpecs[0];
     	
     	DataTableSpec specTable = (DataTableSpec)inSpecs[1];
+    	
+		// verifications related to the table spec
     	if (specTable != null) {
     		
+    		// there is a table as input
     		// check the specs of the inputs table
-        	final int idxColProba = specTable.getNumColumns()-1;
+        	
+    		if (specTable.getNumColumns() < 2)
+        		throw new InvalidSettingsException("The input table should contain at least 2 columns for modalities and probabilities.");
+	
+    		final int idxColProba = specTable.getNumColumns()-1;
         	DataColumnSpec specColProba = specTable.getColumnSpec(idxColProba);
         	
         	List<DataColumnSpec> specColsWhichNeedDomain = IntStream.range(0, specTable.getNumColumns()-1).mapToObj(i -> specTable.getColumnSpec(i)).collect(Collectors.toList());
@@ -92,8 +100,32 @@ public class AddNodeToBNNodeModel extends NodeModel {
         	
     	}
     	
+		String variableToCreate = specTable.getColumnSpec(0).getName();
+
+    	// verifications related to the table and BN specs
+    	if (specBN != null && specTable != null) {
+    		
+    		// complain if the column already exists
+    		if (specBN.getVariableNames().contains(variableToCreate))
+        		throw new InvalidSettingsException("There is already a variable named "+variableToCreate+" in the Bayesian network");
+
+    	}
     	
-        return new BayesianNetworkPortSpec[]{null};
+    	// create specs if possible 
+    	if (specBN != null && specTable != null) {
+    		
+    		Map<String,List<String>> variableName2modalities = new HashMap<>(specBN.getVariableAndModalities());
+    		variableName2modalities.put(
+    				variableToCreate, 
+    				specTable.getColumnSpec(0).getDomain().getValues().stream().map(v -> v.toString()).collect(Collectors.toList())
+    				);
+    		
+    		return new BayesianNetworkPortSpec[]{
+    				new BayesianNetworkPortSpec(variableName2modalities)
+    		};
+
+    	} else 
+    		return new BayesianNetworkPortSpec[]{null};
 
 	}
 

@@ -1,6 +1,7 @@
 package ch.resear.thiriot.knime.bayesiannetworks;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -22,12 +23,15 @@ import org.knime.core.data.def.StringCell.StringCellFactory;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
+import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortSpec;
 
 // TODO manage intervals
 
 public class DataTableToBNMapper {
 
-	public final NodeCategorical node;
+	//public final NodeCategorical node;
+	public final String nodeName;
+	public final List<String> nodeDomain;
 	private DataColumnSpec spec = null;
 	
 	protected final ILogger logger;
@@ -49,13 +53,35 @@ public class DataTableToBNMapper {
     			);
     }
     
+    public static Map<String,DataTableToBNMapper> createMapper(
+    		BayesianNetworkPortSpec specBN, 
+    		ILogger logger) {
+    	return specBN.getVariableNames().stream().collect(
+    			Collectors.toMap( 
+    					s -> s, 
+    					s -> new DataTableToBNMapper(s, specBN.getModalities(s), logger)
+    					)
+    			);
+    }
+    
     
     
     
 	public DataTableToBNMapper(NodeCategorical node, 
 			ILogger logger) {
 		
-		this.node = node;
+		this.nodeName = node.getName();
+		this.nodeDomain = node.getDomain();
+		this.logger = logger;
+		
+		getSpecForNode();
+	}
+	
+	public DataTableToBNMapper(String nodeName, List<String> nodeDomain,
+			ILogger logger) {
+		
+		this.nodeName = nodeName;
+		this.nodeDomain = nodeDomain;
 		this.logger = logger;
 		
 		getSpecForNode();
@@ -68,27 +94,25 @@ public class DataTableToBNMapper {
     	
     	// TODO detect ranges as intervals
     	
+    	final Set<String> domainLower = nodeDomain.stream().map(s -> s.toLowerCase()).collect(Collectors.toSet());
     	
-    	
-    	final Set<String> domainLower = node.getDomain().stream().map(s -> s.toLowerCase()).collect(Collectors.toSet());
-    	
-    	if ( node.getDomainSize()==2 
+    	if ( nodeDomain.size()==2 
     			&& domainLower.contains("true")
     			&& domainLower.contains("false")) {
     	
     		knimeType = BooleanCell.TYPE;
-    		logger.info("the domain of variable "+node.getName()+" will be considered as Boolean");
+    		logger.info("the domain of variable "+nodeName+" will be considered as Boolean");
     		
-    	} else if (node.getDomain().stream().allMatch(s -> NumberUtils.isCreatable(s))) {
+    	} else if (nodeDomain.stream().allMatch(s -> NumberUtils.isCreatable(s))) {
     		
     		// these are numbers; but are they also integers? 
-    		if (node.getDomain().stream().map(s -> Double.parseDouble(s)).allMatch(d -> (double)d.intValue() == d)) {
+    		if (nodeDomain.stream().map(s -> Double.parseDouble(s)).allMatch(d -> (double)d.intValue() == d)) {
     			// all integer !
-    			logger.info("the domain of variable "+node.getName()+" will be considered as integer values");
+    			logger.info("the domain of variable "+nodeName+" will be considered as integer values");
         		knimeType = IntCell.TYPE;
         		
     		} else {
-    			logger.info("the domain of variable "+node.getName()+" will be considered as double values");
+    			logger.info("the domain of variable "+nodeName+" will be considered as double values");
         		knimeType = DoubleCell.TYPE;
         		
     		}
@@ -98,7 +122,7 @@ public class DataTableToBNMapper {
     	}
     	
     	spec = new DataColumnSpecCreator(
-    			node.getName(), 
+    			nodeName, 
     			knimeType
     			).createSpec();
     	
@@ -132,12 +156,12 @@ public class DataTableToBNMapper {
 			
 			cell2string.put(
 					BooleanCell.FALSE,
-					node.getDomain().stream().filter( s -> s.toLowerCase().equals("false") ).findFirst().get()
+					nodeDomain.stream().filter( s -> s.toLowerCase().equals("false") ).findFirst().get()
 					);
 			
 			cell2string.put(
 					BooleanCell.TRUE,
-					node.getDomain().stream().filter( s -> s.toLowerCase().equals("true") ).findFirst().get()
+					nodeDomain.stream().filter( s -> s.toLowerCase().equals("true") ).findFirst().get()
 					);
 			
 			res = cell2string.get(cell);
@@ -147,7 +171,7 @@ public class DataTableToBNMapper {
     		
     		res = cell.toString();
     		cell2string.put(cell, res);
-    		logger.debug("unknown value for variable "+node+"="+cell+" (we knew "+cell2string.keySet()+") => adding the mapping to "+cell.toString());
+    		logger.debug("unknown value for variable "+nodeName+"="+cell+" (we knew "+cell2string.keySet()+") => adding the mapping to "+cell.toString());
     		// try to identify what we talk about. 
     		//
     			
@@ -156,8 +180,8 @@ public class DataTableToBNMapper {
     	if (res == null)
     		throw new IllegalArgumentException(
     				"unknow content "+cell+
-    				" for node "+this.node+"; "+
-    				"the known domain is "+this.node.getDomain());
+    				" for node "+this.nodeName+"; "+
+    				"the known domain is "+this.nodeDomain);
     	return res;
     }
     

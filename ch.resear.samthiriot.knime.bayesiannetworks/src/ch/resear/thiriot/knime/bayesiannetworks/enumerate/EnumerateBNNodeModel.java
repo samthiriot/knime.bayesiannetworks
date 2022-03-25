@@ -42,6 +42,7 @@ import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwor
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.IteratorCategoricalVariables;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
 import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortObject;
+import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortSpec;
 
 /**
  * This is the model implementation of SampleFromBNNode.
@@ -102,10 +103,11 @@ public class EnumerateBNNodeModel extends NodeModel {
 
     @Override
 	protected PortObjectSpec[] configure(PortObjectSpec[] inSpecs) throws InvalidSettingsException {
-	
-        return new DataTableSpec[]{null};
-
-	}
+	    	
+    	// we cannot determine the order of the columns without the complete Bayesian network
+		return new DataTableSpec[]{ null };
+		
+    }
     
     protected double computeProbability(
     		List<NodeCategorical> nodeOrderForBest, 

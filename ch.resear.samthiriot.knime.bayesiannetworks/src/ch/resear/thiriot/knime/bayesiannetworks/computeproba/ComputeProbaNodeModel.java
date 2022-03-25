@@ -33,8 +33,6 @@ import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 
-import cern.jet.random.engine.MersenneTwister;
-import cern.jet.random.engine.RandomEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.DataTableToBNMapper;
 import ch.resear.thiriot.knime.bayesiannetworks.LogIntoNodeLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
@@ -55,9 +53,7 @@ public class ComputeProbaNodeModel extends NodeModel {
             .getLogger(ComputeProbaNodeModel.class);
     private static final ILogger ilogger = new LogIntoNodeLogger(logger);
         
-    // example value: the models count variable filled from the dialog 
-    // and used in the models execution method. The default components of the
-    // dialog work with "SettingsModels".
+
     private final SettingsModelString m_colname =
             new SettingsModelString("colname", "probability");
         
@@ -73,18 +69,7 @@ public class ComputeProbaNodeModel extends NodeModel {
  
     }
     
-    
 
-    @Override
-	protected PortObjectSpec[] configure(PortObjectSpec[] inSpecs) throws InvalidSettingsException {
-	
-    	DataTableSpec tableSpecs = (DataTableSpec) inSpecs[0];
-    	if (tableSpecs == null)
-    		return new DataTableSpec[]{null};
-
-    	return new DataTableSpec[] { createSpecsForTable(tableSpecs) };
-	}
-    
     private DataTableSpec createSpecsForTable(DataTableSpec tableSpecs) {
 
     	List<DataColumnSpec> specs = new LinkedList<DataColumnSpec>();
@@ -98,10 +83,24 @@ public class ComputeProbaNodeModel extends NodeModel {
     		new DataColumnSpecCreator(m_colname.getStringValue(), DoubleCell.TYPE).createSpec()
     	);
     	
-    	
     	return new DataTableSpec(specs.toArray(new DataColumnSpec[specs.size()]));
 	}
 
+    @Override
+	protected PortObjectSpec[] configure(PortObjectSpec[] inSpecs) throws InvalidSettingsException {
+	
+    	DataTableSpec tableSpecs = (DataTableSpec) inSpecs[0];
+    	
+    	// TODO double check the compliance of the specs
+    	
+    	// create the output table specification
+    	if (tableSpecs != null) {
+    		return new PortObjectSpec[] { createSpecsForTable(tableSpecs) };
+    	} else 
+    		return new PortObjectSpec[] { null };
+    	
+	}
+    
 
 	@Override
 	protected PortObject[] execute(

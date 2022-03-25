@@ -3,6 +3,10 @@
  */
 package ch.resear.thiriot.knime.bayesiannetworks.port;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import javax.swing.JComponent;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -50,22 +54,6 @@ public class BayesianNetworkPortObject extends AbstractSimplePortObject {
 	@Override
 	public JComponent[] getViews() {
 		
-		JScrollPane spNodes;
-		{
-			StringBuffer sb = new StringBuffer();
-			sb.append(bn.nodes.size()).append(" nodes");
-			
-			if (!bn.nodes.isEmpty()) {
-				sb.append(":\n");
-				bn.enumerateNodes().stream().map(n -> "- " +n+" "+NodeCategorical.getStrRepresentationOfDomain(n.getDomain())+"\n").forEach(s -> sb.append(s));
-			}
-			
-			JTextArea c = new JTextArea(sb.toString());
-			c.setLineWrap(true);
-			
-			spNodes = new JScrollPane(c); 
-			spNodes.setName("Nodes");
-		}
 		JScrollPane spProbabilities;
 		{
 			StringBuffer sb = new StringBuffer();
@@ -111,7 +99,7 @@ public class BayesianNetworkPortObject extends AbstractSimplePortObject {
 		}
 
 		
-		return new JComponent [] { spNodes, spProbabilities };
+		return new JComponent [] { spProbabilities };
 	}
 	
 	
@@ -131,7 +119,8 @@ public class BayesianNetworkPortObject extends AbstractSimplePortObject {
 	 */
 	@Override
 	public BayesianNetworkPortSpec getSpec() {
-		return new BayesianNetworkPortSpec();
+		Map<String,List<String>> variableName2modalities = bn.enumerateNodes().stream().collect(Collectors.toMap(n -> n.getName(), n -> n.getDomain()));
+		return new BayesianNetworkPortSpec(variableName2modalities);
 	}
 
 	/* (non-Javadoc)

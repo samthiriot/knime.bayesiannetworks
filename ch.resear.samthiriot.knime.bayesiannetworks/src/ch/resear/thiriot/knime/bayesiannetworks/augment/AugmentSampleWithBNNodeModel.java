@@ -3,12 +3,10 @@ package ch.resear.thiriot.knime.bayesiannetworks.augment;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.knime.core.data.DataCell;
@@ -40,10 +38,10 @@ import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.AbstractInferenceEngine;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.EliminationInferenceEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.InferencePerformanceUtils;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.RecursiveConditionningEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortObject;
+import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortSpec;
 
 
 /**
@@ -79,6 +77,43 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
   	            new PortType[] { BufferedDataTable.TYPE });
    
     }
+
+    @Override
+	protected PortObjectSpec[] configure(PortObjectSpec[] inSpecs) throws InvalidSettingsException {
+    	
+    	DataTableSpec specTable = (DataTableSpec)inSpecs[0];
+    	BayesianNetworkPortSpec specBN = (BayesianNetworkPortSpec) inSpecs[1];
+    	
+    	if (specTable != null && specBN != null) {
+    		
+        	Map<String,DataTableToBNMapper> node2mapper = DataTableToBNMapper.createMapper(specBN, ilogger);
+
+        	List<DataColumnSpec> specs = new LinkedList<DataColumnSpec>();
+        	
+        	List<String> bnVariablesNames = new LinkedList<>(specBN.getVariableNames());
+        	
+        	// there will be the same columns as in the original table
+        	for (int i=0; i<specTable.getNumColumns(); i++) {
+        		DataColumnSpec colSpec = specTable.getColumnSpec(i);
+        		specs.add(colSpec);
+        		bnVariablesNames.remove(colSpec.getName());
+        	}
+        	
+        	// and we will add the additional nodes
+        	for (String nodeName: bnVariablesNames) {
+        		
+        		specs.add(node2mapper.get(nodeName).getSpecForNode());
+        	}
+        	
+        	DataColumnSpec[] specsArray = specs.toArray(new DataColumnSpec[specs.size()]);
+        	
+    		return new DataTableSpec[]{ new DataTableSpec(specsArray) };
+
+    	} else 
+    		return new DataTableSpec[]{ null };
+
+
+	}
 
     @Override
 	protected PortObject[] execute(
@@ -322,13 +357,6 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
 
     	// nothing to do
     }
-
-    @Override
-	protected PortObjectSpec[] configure(PortObjectSpec[] inSpecs) throws InvalidSettingsException {
-	
-        return new DataTableSpec[]{null};
-
-	}
 
 
     /**
