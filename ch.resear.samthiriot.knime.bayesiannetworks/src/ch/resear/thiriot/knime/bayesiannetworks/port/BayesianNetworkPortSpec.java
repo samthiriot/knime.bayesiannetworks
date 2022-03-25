@@ -3,6 +3,7 @@ package ch.resear.thiriot.knime.bayesiannetworks.port;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +28,7 @@ public class BayesianNetworkPortSpec extends AbstractSimplePortObjectSpec {
     public static final class Serializer extends AbstractSimplePortObjectSpecSerializer<BayesianNetworkPortSpec> {}
 
     private Map<String,List<String>> variableName2modalities;
+    private List<String> orderedVariableNames = null;
     
 	public BayesianNetworkPortSpec() {
 		this.variableName2modalities = Collections.emptyMap();
@@ -39,6 +41,22 @@ public class BayesianNetworkPortSpec extends AbstractSimplePortObjectSpec {
 	
 	public Collection<String> getVariableNames() {
 		return variableName2modalities.keySet();
+	}
+	
+	/**
+	 * Return the list of the variable sorted in natural order
+	 * @return
+	 */
+	public List<String> getSortedVariableNames() { 
+		
+		if (orderedVariableNames != null)
+			return orderedVariableNames;
+		
+		orderedVariableNames = new LinkedList<>(variableName2modalities.keySet());
+		Collections.sort(orderedVariableNames);
+		
+		orderedVariableNames = Collections.unmodifiableList(orderedVariableNames);
+		return orderedVariableNames;
 	}
 	
 	public List<String> getModalities(String variable) {

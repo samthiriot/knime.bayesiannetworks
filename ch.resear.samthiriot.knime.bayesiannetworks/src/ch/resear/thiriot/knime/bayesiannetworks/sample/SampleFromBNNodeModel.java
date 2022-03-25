@@ -135,7 +135,7 @@ public class SampleFromBNNodeModel extends NodeModel {
     	
     	List<DataColumnSpec> specs = new LinkedList<DataColumnSpec>();
     			
-    	for (NodeCategorical node: bn.enumerateNodes()) {
+    	for (NodeCategorical node: bn.getNodesSortedByName()) {
     		
     		specs.add(node2mapper.get(node).getSpecForNode());
     	}
@@ -158,7 +158,7 @@ public class SampleFromBNNodeModel extends NodeModel {
         	Map<String,DataTableToBNMapper> node2mapper = DataTableToBNMapper.createMapper(specBN, ilogger);
 
         	List<DataColumnSpec> specs = new LinkedList<DataColumnSpec>();
-        	for (String nodeName: specBN.getVariableNames()) {
+        	for (String nodeName: specBN.getSortedVariableNames()) {
         		
         		specs.add(node2mapper.get(nodeName).getSpecForNode());
         	}
@@ -261,6 +261,8 @@ public class SampleFromBNNodeModel extends NodeModel {
 	        	try {
 		        	next = it.next();
 		        	done += next.count;
+		        	if (next.node2value.isEmpty())
+		        		throw new RuntimeException("no entity generated...");
 		        	totalRowsGenerated += next.count;
 	        	} catch (RuntimeException e) {
 	        		e.printStackTrace();
@@ -273,8 +275,10 @@ public class SampleFromBNNodeModel extends NodeModel {
 			        	// convert to KNIME cells
 			        	DataCell[] results = new DataCell[next.node2value.size()+1];
 			        	int j=0;
-			        	for (NodeCategorical node : bn.enumerateNodes()) {
+			        	for (NodeCategorical node : bn.getNodesSortedByName()) {
 			        		String valueStr = next.node2value.get(node);
+			        		if (valueStr == null)
+			        			throw new RuntimeException("value for node "+node+" not found");
 			        		results[j++] = node2mapper.get(node).createCellForStringValue(valueStr);
 			        	}
 			        	results[j] = IntCellFactory.create(next.count);
@@ -290,8 +294,10 @@ public class SampleFromBNNodeModel extends NodeModel {
 		        		// convert to KNIME cells
 			        	DataCell[] results = new DataCell[next.node2value.size()];
 			        	int j=0;
-			        	for (NodeCategorical node : bn.enumerateNodes()) {
+			        	for (NodeCategorical node : bn.getNodesSortedByName()) {
 			        		String valueStr = next.node2value.get(node);
+			        		if (valueStr == null)
+			        			throw new RuntimeException("value for node "+node+" not found");
 			        		results[j++] = node2mapper.get(node).createCellForStringValue(valueStr);
 			        	}
 			        	for (int i=0; i<next.count; i++) {

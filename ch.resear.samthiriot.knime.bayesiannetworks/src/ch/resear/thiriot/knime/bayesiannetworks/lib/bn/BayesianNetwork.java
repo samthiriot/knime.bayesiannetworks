@@ -4,9 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -35,7 +35,8 @@ public class BayesianNetwork<N extends AbstractNode<N>> {
 	
 	protected Map<String,N> name2node = new HashMap<>();
 	
-	protected List<N> nodesEnumeration;
+	protected List<N> nodesEnumeration = null;
+	private List<N> cachedSortedByName = null;
 
 	private final String name;
 	
@@ -102,6 +103,7 @@ public class BayesianNetwork<N extends AbstractNode<N>> {
 	public void notifyNodesChanged() {
 		nodesEnumeration = null;
 		name2node.clear();
+		cachedSortedByName = null;
 	}
 	
 	/**
@@ -109,11 +111,11 @@ public class BayesianNetwork<N extends AbstractNode<N>> {
 	 * @return
 	 */
 	public List<N> enumerateNodes() {
-		
+				
 		if (nodesEnumeration != null)
 			return nodesEnumeration;
-		
-		nodesEnumeration = new LinkedList<>();
+				
+		LinkedList<N> futureNodesEnumeration = new LinkedList<>();
 		
 		List<N> toProcess = new LinkedList<>(nodes);
 		
@@ -125,7 +127,7 @@ public class BayesianNetwork<N extends AbstractNode<N>> {
 
 			int idxMin = 0;
 			for (N p: n.getParents()) {
-				int idxParent = nodesEnumeration.indexOf(p);
+				int idxParent = futureNodesEnumeration.indexOf(p);
 				if (idxParent == -1) {
 					// reinsert in the queue for further process
 					toProcess.add(n);
@@ -136,18 +138,38 @@ public class BayesianNetwork<N extends AbstractNode<N>> {
 				}
 				
 			}
-			nodesEnumeration.add(idxMin, n);
+			futureNodesEnumeration.add(idxMin, n);
 			if (logger.isDebugEnabled())
-				logger.debug("order for nodes: " + nodesEnumeration);
+				logger.debug("order for nodes: " + futureNodesEnumeration);
 		}
 		
 		
 		if (logger.isDebugEnabled())
-				logger.debug("order for nodes: " + nodesEnumeration);
+				logger.debug("order for nodes: " + futureNodesEnumeration);
 	
-		nodesEnumeration = Collections.unmodifiableList(nodesEnumeration);
-		
+		nodesEnumeration = Collections.unmodifiableList(futureNodesEnumeration);
+				
 		return nodesEnumeration;
+		
+	}
+	
+	
+	public List<N> getNodesSortedByName() {
+		
+		if (cachedSortedByName != null)
+			return cachedSortedByName;
+		
+		List<N> futureCachedSortedByName = new LinkedList<>(nodes);
+		Collections.sort(futureCachedSortedByName, new Comparator<N>() {
+
+			@Override
+			public int compare(N o1, N o2) {
+				return o1.name.compareTo(o2.name);
+			}
+		});
+		
+		cachedSortedByName = Collections.unmodifiableList(futureCachedSortedByName);
+		return cachedSortedByName;
 	}
 	
 	/**

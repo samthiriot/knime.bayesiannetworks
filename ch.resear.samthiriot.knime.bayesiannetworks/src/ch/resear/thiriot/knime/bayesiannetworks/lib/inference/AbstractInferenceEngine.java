@@ -354,10 +354,21 @@ public abstract class AbstractInferenceEngine {
 			// store this novel value as evidence for this individual
 			this.addEvidence(n, value);
 		}
-				
+		
 		// reset evidence to its original value
 		this.clearEvidence();
 		this.addEvidence(originalEvidence);
+		
+		/* ugly patch
+		if (node2attribute.isEmpty() && !bn.nodes.isEmpty()) {
+			// we failed to generate a result, 
+			// yet it should have produced something
+			logger.warn("failed to generate one entity, the generated entity was null; retrying...");
+			return sampleOne();
+			//throw new RuntimeException("generated an empty sample o_O");
+			
+		}
+		*/
 		
 		return node2attribute;
 	}

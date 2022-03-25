@@ -90,7 +90,7 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
 
         	List<DataColumnSpec> specs = new LinkedList<DataColumnSpec>();
         	
-        	List<String> bnVariablesNames = new LinkedList<>(specBN.getVariableNames());
+        	List<String> bnVariablesNames = new LinkedList<>(specBN.getSortedVariableNames());
         	
         	// there will be the same columns as in the original table
         	for (int i=0; i<specTable.getNumColumns(); i++) {
@@ -163,7 +163,7 @@ public class AugmentSampleWithBNNodeModel extends NodeModel {
 
     	Map<NodeCategorical,Integer> nodeToAdd2idx = new HashMap<>(); 
 
-    	for (NodeCategorical n: bn.enumerateNodes()) {
+    	for (NodeCategorical n: bn.getNodesSortedByName()) {
     		
     		name2node.put(n.getName(), n);
     		

@@ -87,7 +87,7 @@ public class EnumerateBNNodeModel extends NodeModel {
     	List<DataColumnSpec> specs = new LinkedList<DataColumnSpec>();
     		
     	// add columns for all the variables
-    	for (NodeCategorical node: bn.enumerateNodes()) {
+    	for (NodeCategorical node: bn.getNodesSortedByName()) {
     		
     		specs.add(node2mapper.get(node).getSpecForNode());
     	}
@@ -103,9 +103,29 @@ public class EnumerateBNNodeModel extends NodeModel {
 
     @Override
 	protected PortObjectSpec[] configure(PortObjectSpec[] inSpecs) throws InvalidSettingsException {
-	    	
-    	// we cannot determine the order of the columns without the complete Bayesian network
-		return new DataTableSpec[]{ null };
+    	
+    	BayesianNetworkPortSpec specBN = (BayesianNetworkPortSpec) inSpecs[0];
+    	
+    	if (specBN != null) {
+    		
+        	Map<String,DataTableToBNMapper> node2mapper = DataTableToBNMapper.createMapper(specBN, ilogger);
+
+        	List<DataColumnSpec> specs = new LinkedList<DataColumnSpec>();
+        	for (String nodeName: specBN.getSortedVariableNames()) {
+        		
+        		specs.add(node2mapper.get(nodeName).getSpecForNode());
+        	}
+        	// add a column for the probability
+        	specs.add(
+        		new DataColumnSpecCreator("probability", DoubleCell.TYPE).createSpec()
+        	);
+        	
+        	DataColumnSpec[] specsArray = specs.toArray(new DataColumnSpec[specs.size()]);
+        	
+    		return new DataTableSpec[]{ new DataTableSpec(specsArray) };
+
+    	} else 
+    		return new DataTableSpec[]{null};
 		
     }
     
@@ -361,7 +381,7 @@ public class EnumerateBNNodeModel extends NodeModel {
     		// convert to KNIME cells
         	DataCell[] results = new DataCell[variable2value.size()+1];
         	int j=0;
-        	for (NodeCategorical node : bn.enumerateNodes()) {
+        	for (NodeCategorical node : bn.getNodesSortedByName()) {
         		
         		String valueStr = variable2value.get(node);
         		

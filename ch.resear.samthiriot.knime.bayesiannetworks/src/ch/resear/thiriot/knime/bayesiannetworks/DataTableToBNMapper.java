@@ -1,9 +1,9 @@
 package ch.resear.thiriot.knime.bayesiannetworks;
 
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.math.NumberUtils;
@@ -45,7 +45,7 @@ public class DataTableToBNMapper {
     public static Map<NodeCategorical,DataTableToBNMapper> createMapper(
     		CategoricalBayesianNetwork bn, 
     		ILogger logger) {
-    	return bn.getNodes().stream().collect(
+    	return bn.getNodesSortedByName().stream().collect(
     			Collectors.toMap( 
     					n -> n, 
     					n -> new DataTableToBNMapper(n, logger)
@@ -56,7 +56,7 @@ public class DataTableToBNMapper {
     public static Map<String,DataTableToBNMapper> createMapper(
     		BayesianNetworkPortSpec specBN, 
     		ILogger logger) {
-    	return specBN.getVariableNames().stream().collect(
+    	return specBN.getSortedVariableNames().stream().collect(
     			Collectors.toMap( 
     					s -> s, 
     					s -> new DataTableToBNMapper(s, specBN.getModalities(s), logger)
@@ -114,7 +114,6 @@ public class DataTableToBNMapper {
     		} else {
     			logger.info("the domain of variable "+nodeName+" will be considered as double values");
         		knimeType = DoubleCell.TYPE;
-        		
     		}
     		
     	} else {
@@ -133,6 +132,7 @@ public class DataTableToBNMapper {
     public DataCell createCellForStringValue(String valueStr) {
     	
     	DataCell res = null;
+
     	if (knimeType == BooleanCell.TYPE) {
 			res = BooleanCellFactory.create(valueStr);
 		} else if (knimeType == DoubleCell.TYPE) {
