@@ -123,6 +123,7 @@ public final class MultinomialRecursiveSamplingSpliterator
 						counts[i] = rng.nextInt(remainingCount, pp);
 					} catch (java.lang.ArrayIndexOutOfBoundsException e) {
 						// try again another time
+						logger.warn("catched a technical error during Binomial random number generation. Will retry.");
 						counts[i] = rng.nextInt(remainingCount, pp);
 					}
 					// sometimes the binomial law returns strange quantities
