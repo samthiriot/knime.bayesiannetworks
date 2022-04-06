@@ -68,7 +68,7 @@
       <portType
             color="#219829"
             hidden="false"
-            name="ch.res_ear.samthiriot.porttype.bayesiannet"
+            name="Bayesian network"
             objectClass="ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortObject"
             objectSerializer="ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortObject$Serializer"
             specClass="ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortSpec"
