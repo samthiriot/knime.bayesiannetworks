@@ -43,6 +43,9 @@
         <p>Computing time depends on the size of the Bayesian network: size of the Conditional Probability Tables, 
         count of them. 
         The behavior is not linear thanks to caching of computations: the more lines your compute, the quicker it goes.
+        If you use multinomial sampling or round and sample, and the resulting table contains mostly counts of 1, 
+        then using forward sampling would be more efficient. Both these methods become efficient when they achieve 
+        to create combinations by group. 
         </p>
         
         <p>

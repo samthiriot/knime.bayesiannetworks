@@ -60,7 +60,7 @@ public class BayesianNetworkPortObject extends AbstractSimplePortObject {
 			
 			
 			if (!bn.nodes.isEmpty()) {
-				for (NodeCategorical n: bn.enumerateNodes()) {
+				for (NodeCategorical n: bn.getNodesSortedByName()) {
 					sb.append(n).append("\n");
 
 					n.toStringComplete(sb);

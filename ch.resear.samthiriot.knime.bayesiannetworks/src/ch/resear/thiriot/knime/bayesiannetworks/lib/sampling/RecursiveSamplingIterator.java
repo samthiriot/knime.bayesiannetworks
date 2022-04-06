@@ -47,6 +47,7 @@ public abstract class RecursiveSamplingIterator<R extends DoubleFunction> implem
 			AbstractInferenceEngine engine,
 			ExecutionMonitor exec,
 			ILogger ilogger) {
+		
 		this(count, bn.enumerateNodes(), rng, engine, exec, ilogger);
 	}
 

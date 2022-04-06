@@ -16,15 +16,31 @@ public final class RoundAndSampleRecursiveSamplingIterator extends RecursiveSamp
 
 	public static final String GENERATION_METHOD_NAME = "round then random";
 
-	public RoundAndSampleRecursiveSamplingIterator(int count, CategoricalBayesianNetwork bn, RandomEngine rng,
-			AbstractInferenceEngine engine, ExecutionMonitor exec, ILogger ilogger) {
+	public RoundAndSampleRecursiveSamplingIterator(
+			int count, 
+			CategoricalBayesianNetwork bn, 
+			RandomEngine rng,
+			AbstractInferenceEngine engine, 
+			ExecutionMonitor exec, 
+			ILogger ilogger) {
+		
 		this(count, bn.enumerateNodes(), rng, engine, exec, ilogger);
 	}
 
-	protected RoundAndSampleRecursiveSamplingIterator(int count, List<NodeCategorical> nodes, RandomEngine rng,
-			AbstractInferenceEngine engine, ExecutionMonitor exec, ILogger ilogger) {
-		this(count, nodes.get(0), nodes.subList(1, nodes.size()),
-				Collections.emptyMap(), Collections.emptyMap(),
+	protected RoundAndSampleRecursiveSamplingIterator(
+			int count, 
+			List<NodeCategorical> nodes, 
+			RandomEngine rng,
+			AbstractInferenceEngine engine, 
+			ExecutionMonitor exec, 
+			ILogger ilogger) {
+		
+		this(
+				count, 
+				nodes.get(0), 
+				nodes.subList(1, nodes.size()),
+				Collections.emptyMap(), 
+				Collections.emptyMap(),
 				rng,
 				engine,
 				exec,
@@ -33,24 +49,39 @@ public final class RoundAndSampleRecursiveSamplingIterator extends RecursiveSamp
 				);
 	}
 
-	protected RoundAndSampleRecursiveSamplingIterator(int count, NodeCategorical n, List<NodeCategorical> remaining,
-			Map<NodeCategorical, String> evidence, Map<NodeCategorical, Map<String, Double>> alreadyComputed,
-			RandomEngine rng, AbstractInferenceEngine engine, ExecutionMonitor exec, ILogger ilogger, String name) {
+	protected RoundAndSampleRecursiveSamplingIterator(
+			int count, 
+			NodeCategorical n, 
+			List<NodeCategorical> remaining,
+			Map<NodeCategorical, String> evidence, 
+			Map<NodeCategorical, Map<String, Double>> alreadyComputed,
+			RandomEngine rng, 
+			AbstractInferenceEngine engine, 
+			ExecutionMonitor exec, 
+			ILogger ilogger, 
+			String name) {
+		
 		super(count, n, remaining, evidence, alreadyComputed, rng, engine, exec, ilogger, name);
 	}
 	
 
 	@Override
-	protected RecursiveSamplingIterator<RandomEngine> createSubIterator(int count, NodeCategorical n, List<NodeCategorical> remaining,
-			Map<NodeCategorical, String> evidence, Map<NodeCategorical, Map<String, Double>> alreadyComputed) {
-		return new RoundAndSampleRecursiveSamplingIterator(count, n, remaining, evidence, alreadyComputed, rng, engine, exec, logger, name);
+	protected RecursiveSamplingIterator<RandomEngine> createSubIterator(
+			int count, 
+			NodeCategorical n, 
+			List<NodeCategorical> remaining,
+			Map<NodeCategorical, String> evidence, 
+			Map<NodeCategorical, Map<String, Double>> alreadyComputed) {
+		
+		return new RoundAndSampleRecursiveSamplingIterator(
+				count, n, remaining, evidence, alreadyComputed, 
+				rng, engine, exec, logger, name);
 	}
 		
 
 	@Override
 	protected int[] getCounts(int count, double[] probabilities) {
 
-		
 		// how many entities should be generated here?
 		double[] frequencies = new double[probabilities.length];
 		int[] counts = new int[probabilities.length];

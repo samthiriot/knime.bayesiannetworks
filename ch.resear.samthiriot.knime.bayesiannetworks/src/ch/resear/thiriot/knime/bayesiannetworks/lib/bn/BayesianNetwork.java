@@ -106,12 +106,8 @@ public class BayesianNetwork<N extends AbstractNode<N>> {
 		cachedSortedByName = null;
 	}
 	
-	/**
-	 * returns the nodes in their order for browsing them from root to leafs
-	 * @return
-	 */
-	public List<N> enumerateNodes() {
-				
+	protected List<N> enumerateNodes(Collection<N> nodes) {
+
 		if (nodesEnumeration != null)
 			return nodesEnumeration;
 				
@@ -150,7 +146,15 @@ public class BayesianNetwork<N extends AbstractNode<N>> {
 		nodesEnumeration = Collections.unmodifiableList(futureNodesEnumeration);
 				
 		return nodesEnumeration;
-		
+	}
+	
+	/**
+	 * returns the nodes in their order for browsing them from root to leafs
+	 * @return
+	 */
+	public List<N> enumerateNodes() {
+				
+		return enumerateNodes(nodes);
 	}
 	
 	

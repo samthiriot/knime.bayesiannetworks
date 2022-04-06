@@ -8,6 +8,12 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Spliterator;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.stat.descriptive.rank.Median;
@@ -38,9 +44,10 @@ import org.knime.core.node.port.PortType;
 import ch.resear.thiriot.knime.bayesiannetworks.DataTableToBNMapper;
 import ch.resear.thiriot.knime.bayesiannetworks.LogIntoNodeLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.BNUtils;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
-import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.IteratorCategoricalVariables;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.SpliteratorCategoricalVariables;
 import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortObject;
 import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortSpec;
 
@@ -62,6 +69,10 @@ public class EnumerateBNNodeModel extends NodeModel {
     private final SettingsModelDoubleBounded m_skipEpsilon = new SettingsModelDoubleBounded("skip_epsilon", 1e-6, 0.0, 1.0);
 
     private Map<NodeCategorical,DataTableToBNMapper> node2mapper = new HashMap<>();
+    
+    private long totalCombinationsExplored = 0;
+    private long totalRowsGenerated = 0;
+    private long timestampStart = 0;
     
     /**
      * Constructor for the node model.
@@ -129,7 +140,7 @@ public class EnumerateBNNodeModel extends NodeModel {
 		
     }
     
-    protected double computeProbability(
+    protected static double computeProbability(
     		List<NodeCategorical> nodeOrderForBest, 
     		Map<NodeCategorical, String> variable2value) {
     	
@@ -205,6 +216,116 @@ public class EnumerateBNNodeModel extends NodeModel {
     	
     }
     
+    private class SpliteratorSamplerToTable 
+				implements Callable<BufferedDataTable>,
+				Consumer<Map<NodeCategorical,String>> {
+			
+			private final DataTableSpec outputSpec;
+			private final ExecutionContext exec;
+			private final CategoricalBayesianNetwork bn;
+			private final SpliteratorCategoricalVariables it;
+			private final int firstId;
+			private final boolean skipOnEpsilon;
+			private final double skipEpsilon;
+			private final List<NodeCategorical> nodeOrderForBest;
+			private final boolean skipNull;
+			
+			private int done = 0;
+			private int rows = 0;
+			private BufferedDataContainer container = null;
+			
+			public SpliteratorSamplerToTable(
+				CategoricalBayesianNetwork bn,
+				SpliteratorCategoricalVariables it,
+				DataTableSpec outputSpec,
+				ExecutionContext exec,
+				int firstId,
+				boolean skipOnEpsilon,
+				boolean skipNull,
+				double skipEpsilon,
+				List<NodeCategorical> nodeOrderForBest) {
+			
+				this.outputSpec = outputSpec;
+				this.exec = exec;
+				this.bn = bn;
+				this.it = it;
+				this.firstId = firstId;
+				this.skipOnEpsilon = skipOnEpsilon;
+				this.skipEpsilon = skipEpsilon;
+				this.nodeOrderForBest = nodeOrderForBest;
+				this.skipNull = skipNull;
+			}
+			
+			@Override
+			public BufferedDataTable call() throws Exception {
+				
+	    		exec.checkCanceled();
+
+				container = exec.createDataContainer(outputSpec);
+				
+				try {
+					
+					// ask the spliterator to execute on all the remaining elements
+					it.forEachRemaining(this);
+					
+				} finally {
+					container.close();
+				}
+				
+				return container.getTable();
+			}
+			
+			@Override
+			public void accept(Map<NodeCategorical,String> variable2value) {
+				
+				totalCombinationsExplored += 1;
+				
+				//System.out.println(next);
+				long timestampNow = System.currentTimeMillis();
+				//if (firstId == 0) { // only the first thread makes message updates
+				long elapsedSeconds = (timestampNow - timestampStart)/1000;
+				if (elapsedSeconds > 2) {
+					double entitiesPerSecond = totalRowsGenerated / elapsedSeconds;
+					//logger.warn("generating "+((int)entitiesPerSecond)+" rows per second");
+					exec.setMessage("combination "+totalCombinationsExplored+", " + totalRowsGenerated + " rows created ("+(int)entitiesPerSecond+"/s)");
+				}
+		        
+	        	double p;
+	        	if (skipOnEpsilon) 
+	        		p = computeProbabilityPruned(nodeOrderForBest, variable2value, skipEpsilon);
+	        	else 
+	        		p = computeProbability(nodeOrderForBest, variable2value);
+
+	        	if (skipOnEpsilon && p<skipEpsilon)
+	        		return;
+	        	
+	        	if (skipNull && p==0)
+	        		return;
+	        	
+	    		// convert to KNIME cells
+	        	DataCell[] results = new DataCell[variable2value.size()+1];
+	        	int j=0;
+	        	for (NodeCategorical node : bn.getNodesSortedByName()) {
+	        		String valueStr = variable2value.get(node);
+	        		results[j++] = node2mapper.get(node).createCellForStringValue(valueStr);
+	        	}
+	        	results[j] = DoubleCellFactory.create(p);
+	        	
+	        	totalRowsGenerated += 1;
+				done += 1;
+
+	        	// append
+	        	container.addRowToTable(
+	        			new DefaultRow(
+		        			new RowKey("Row " + firstId+done), 
+		        			results
+		        			)
+	        			);
+				
+		}
+			
+    }
+    
     @Override
 	protected PortObject[] execute(
 			PortObject[] inObjects, 
@@ -241,23 +362,7 @@ public class EnumerateBNNodeModel extends NodeModel {
 
         exec.setProgress(0, "generating rows");
 
-    	IteratorCategoricalVariables it = bn.iterateDomains();
-    	
-    	
-        // simple conditioning is the best engine when it comes to sample without evidence
-        //final RandomEngine random = new MersenneTwister();
-        //final AbstractInferenceEngine engine = new EliminationInferenceEngine(ilogger, random, bn);
-        
-        // RecursiveConditionningEngine
-        
-        
-        /*
-        		new SimpleConditionningInferenceEngine(
-        		ilogger, 
-        		random,
-        		bn);
-        */
-    	
+    
     	// create the order to compute probas; we start first with higher counts of zero
     	// which will be eliminated first!
     	List<NodeCategorical> nodeOrderForBest = new ArrayList<>(bn.enumerateNodes());
@@ -350,70 +455,82 @@ public class EnumerateBNNodeModel extends NodeModel {
         	total += total * node.getDomainSize();
         System.out.println("worse total expected "+total);
 
-    	long i=0;
-    	long added=0;
-    	while (it.hasNext()) {
-    		
-    		i++;
-        	exec.setProgress(
-            		((double)i) / total, 
-            		"Exploring combination " + i + ", "+added+" rows created");
-    		exec.checkCanceled();
+        // let's create the parallel samplers
+        int threadsToUse = 8; // TODO parameter
+        List<Callable<BufferedDataTable>> samplers = new ArrayList<>(threadsToUse);
 
-    		Map<NodeCategorical, String> variable2value = it.next();
-    		//System.out.println(variable2value);
-    		
-        	//System.out.println("computing the joint probability");
-        	//double p = bn.jointProbabilityFromFactors(variable2value);
-        	
-        	double p;
-        	if (skipOnEpsilon) 
-        		p = computeProbabilityPruned(nodeOrderForBest, variable2value, skipEpsilon);
-        	else 
-        		p = computeProbability(nodeOrderForBest, variable2value);
+    	//IteratorCategoricalVariables it = bn.iterateDomains();
+    	SpliteratorCategoricalVariables split = bn.spliterateDomains(exec);
+		// try to split the spliterator as many times as demanded
+		List<Spliterator<?>> spliterators = BNUtils.splititeratorForParallel(split, threadsToUse);
+		logger.warn("enumerating using "+spliterators.size()+" parallel threads");
 
-        	if (skipOnEpsilon && p<skipEpsilon)
-        		continue;
-        	
-        	if (skipNull && p==0)
-        		continue;
-        	
-    		// convert to KNIME cells
-        	DataCell[] results = new DataCell[variable2value.size()+1];
-        	int j=0;
-        	for (NodeCategorical node : bn.getNodesSortedByName()) {
-        		
-        		String valueStr = variable2value.get(node);
-        		
-        		results[j++] = node2mapper.get(node).createCellForStringValue(valueStr);
-        		
-        	}
-        	
-        	/*
-        	engine.addEvidence(variable2value);
-        	double p = engine.getProbabilityEvidence();
-        	engine.clearEvidence();
-        	*/
-        	//System.out.println("p = "+p);
-        	results[j] = DoubleCellFactory.create(p);
-    		
-        	// append
-        	container.addRowToTable(
-        			new DefaultRow(
-	        			new RowKey("Row " + i), 
-	        			results
-	        			)
+		// now create as many samplers as required
+		int firstId = 0;
+		ExecutionContext ex = exec.createSubExecutionContext(0.9);
+		for (Spliterator<?> spliti: spliterators) {
+			samplers.add(new SpliteratorSamplerToTable(
+					bn, 
+					(SpliteratorCategoricalVariables)spliti, 
+					outputSpec, 
+					ex, 
+					firstId,
+					skipOnEpsilon,
+					skipNull,
+					skipEpsilon,
+					nodeOrderForBest));
+			firstId = firstId + (int) total / spliterators.size() + 1;
+		}
+		
+        exec.checkCanceled();
+
+        // submit executions
+    	ExecutorService executorService = Executors.newFixedThreadPool(threadsToUse);
+    	totalRowsGenerated = 0;
+    	timestampStart = System.currentTimeMillis();
+    	// wait until termination of all worker threads
+    	List<Future<BufferedDataTable>> results = executorService.invokeAll(samplers);
+    	
+    	executorService.shutdown();
+    	
+        // merge
+        BufferedDataTable resTable;
+        if (threadsToUse > 1) {
+            exec.setProgress(96, "merging tables");
+	        final BufferedDataTable[] resultTables = new BufferedDataTable[samplers.size()];
+	        for (int i = 0; i < resultTables.length; i++) {
+	            resultTables[i] = results.get(i).get();
+	        }
+	        resTable = exec.createConcatenateTable(
+        			exec.createSubProgress(0.1), 
+        			resultTables
         			);
-        	added++;
-        	
+        } else {
+        	resTable = results.get(0).get();
+        }
+        
+        long totalEnumerated = resTable.size();
+        
+    	// assess performance
+    	int performance;
+    	{
+    		long timestampNow = System.currentTimeMillis();
+    		long elapsedMilliSeconds = (timestampNow - timestampStart);
+    		performance = (int)(((double)totalEnumerated/(double)elapsedMilliSeconds)*1000.0);
+    		logger.info(
+    				"enumeration of "+totalEnumerated+" entities on "+threadsToUse+" CPUs"
+    						+ " took "+elapsedMilliSeconds+"s, that is on average "+performance+" entities/s");
     	}
     	
+    	// TODO int, Long ? 
+        pushFlowVariableInt("enumerated_count", (int)totalEnumerated);
+        pushFlowVariableInt("enumerating_performance_entities_per_second", performance);
+
+        
         exec.setProgress(100, "closing outputs");
 
-        // once we are done, we close the container and return its table
-        container.close();
-        BufferedDataTable out = container.getTable();
-        return new BufferedDataTable[]{out};
+        return new BufferedDataTable[]{ resTable };
+
         
 	}
 

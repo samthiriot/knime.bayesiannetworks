@@ -79,7 +79,7 @@ public class BayesianNetworkPortSpec extends AbstractSimplePortObjectSpec {
 			
 			if (!this.variableName2modalities.isEmpty()) {
 				sb.append(":\n");
-				this.variableName2modalities.keySet().stream()
+				this.orderedVariableNames.stream()
 					.map(n -> "- " +n+" "+NodeCategorical.getStrRepresentationOfDomain(this.variableName2modalities.get(n))+"\n")
 					.forEach(s -> sb.append(s));
 			}

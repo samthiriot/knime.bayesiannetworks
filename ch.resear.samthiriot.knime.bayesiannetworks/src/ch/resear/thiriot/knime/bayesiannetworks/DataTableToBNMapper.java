@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.math.NumberUtils;
 import org.knime.core.data.DataCell;
+import org.knime.core.data.DataColumnDomainCreator;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataType;
@@ -100,30 +101,64 @@ public class DataTableToBNMapper {
     			&& domainLower.contains("true")
     			&& domainLower.contains("false")) {
     	
-    		knimeType = BooleanCell.TYPE;
     		logger.info("the domain of variable "+nodeName+" will be considered as Boolean");
+    		knimeType = BooleanCell.TYPE;
+    		
+    		spec = new DataColumnSpecCreator(
+        			nodeName, 
+        			knimeType
+        			). createSpec();
     		
     	} else if (nodeDomain.stream().allMatch(s -> NumberUtils.isCreatable(s))) {
     		
+    		DataCell min = null;
+    		DataCell max = null;
     		// these are numbers; but are they also integers? 
     		if (nodeDomain.stream().map(s -> Double.parseDouble(s)).allMatch(d -> (double)d.intValue() == d)) {
     			// all integer !
     			logger.info("the domain of variable "+nodeName+" will be considered as integer values");
         		knimeType = IntCell.TYPE;
+        		min = IntCellFactory.create(
+        				nodeDomain.stream().mapToInt(s -> Integer.parseInt(s)).min().orElseThrow()
+        				);
+        		max = IntCellFactory.create(
+        				nodeDomain.stream().mapToInt(s -> Integer.parseInt(s)).max().orElseThrow()
+        				);
         		
     		} else {
     			logger.info("the domain of variable "+nodeName+" will be considered as double values");
         		knimeType = DoubleCell.TYPE;
+        		min = DoubleCellFactory.create(
+        				nodeDomain.stream().mapToDouble(s -> Double.parseDouble(s)).min().orElseThrow()
+        				);
+        		max = DoubleCellFactory.create(
+        				nodeDomain.stream().mapToDouble(s -> Double.parseDouble(s)).max().orElseThrow()
+        				);
+        		
     		}
-    		
-    	} else {
-    		knimeType = StringCell.TYPE;
-    	}
     	
-    	spec = new DataColumnSpecCreator(
-    			nodeName, 
-    			knimeType
-    			).createSpec();
+    		DataColumnSpecCreator creator = new DataColumnSpecCreator(
+	    			nodeName, 
+	    			knimeType
+	    			);
+    		creator.setDomain(new DataColumnDomainCreator(
+    				min, 
+    				max
+    				).createDomain());
+    		spec = creator.createSpec();
+	    	
+    	}  else {
+    	
+			knimeType = StringCell.TYPE;
+			Set<DataCell> domainValues = nodeDomain.stream().map(v -> StringCellFactory.create(v)).collect(Collectors.toSet());
+			
+			DataColumnSpecCreator creator = new DataColumnSpecCreator(
+	    			nodeName, 
+	    			knimeType
+	    			);
+			creator.setDomain(new DataColumnDomainCreator(domainValues).createDomain());
+			spec = creator.createSpec();
+    	}
     	
     	return spec;
     }

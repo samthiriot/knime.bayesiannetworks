@@ -2,9 +2,11 @@ package ch.resear.thiriot.knime.bayesiannetworks.lib.bn;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,6 +17,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -22,6 +26,7 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Node;
+import org.knime.core.node.ExecutionContext;
 
 import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.LogIntoJavaLogger;
@@ -45,6 +50,30 @@ public class CategoricalBayesianNetwork extends BayesianNetwork<NodeCategorical>
 	
 	public CategoricalBayesianNetwork clone() {
 		return CategoricalBayesianNetwork.readFromXMLBIF(this.logger, this.getAsXMLString());
+	}
+	
+	/**
+	 * returns the nodes in their order for browsing them from root to leafs.
+	 * For categorical networks, returns first the biggest domains.
+	 * This provides stability in the order and facilitates the parallelism based on domain 
+	 * partition.
+	 * @return
+	 */
+	@Override
+	public List<NodeCategorical> enumerateNodes() {
+		
+		List<NodeCategorical> toProcess = new LinkedList<>(nodes);
+
+		// first sort the nodes with biggest domains first
+		// this way we will present first the roots with the biggest domains
+		Collections.sort(toProcess, new Comparator<NodeCategorical>() {
+
+			@Override
+			public int compare(NodeCategorical o1, NodeCategorical o2) {
+				return Integer.compare(o1.getDomainSize(), o2.getDomainSize());
+			}
+		});
+		return enumerateNodes(toProcess);
 	}
 	
 	@Override
@@ -190,7 +219,7 @@ public class CategoricalBayesianNetwork extends BayesianNetwork<NodeCategorical>
 	        	for (String tok : tableContent.split("[ \t]+")) {
 	        		try {
 	        			//System.out.println("decoding "+tok+" to "+new Double(tok));
-	        			values.add(new Double(tok));
+	        			values.add(Double.parseDouble(tok));
 	        		} catch (NumberFormatException e) {
 	        			throw new IllegalArgumentException("error while parsing this value as a BigDecimal: "+tok,e);
 	        		}
@@ -230,7 +259,7 @@ public class CategoricalBayesianNetwork extends BayesianNetwork<NodeCategorical>
 			logger.debug("reading a CategoricalBayesianNetwork from XML BIF file " + f);
 
 		try {
-			return loadFromXMLBIF(logger, FileUtils.readFileToString(f));
+			return loadFromXMLBIF(logger, FileUtils.readFileToString(f, Charset.defaultCharset()));
 		} catch (IOException e) {
 			throw new IllegalArgumentException("unable to read file "+f, e);
 		}
@@ -291,6 +320,37 @@ public class CategoricalBayesianNetwork extends BayesianNetwork<NodeCategorical>
 		if (!this.nodes.containsAll(nn))
 			throw new IllegalArgumentException("some of these nodes "+nn+" do not belong this Bayesian network "+this.nodes);
 		return new IteratorCategoricalVariables(nn);
+	}
+
+	public Stream<Map<NodeCategorical,String>> streamDomains(ExecutionContext ex) {
+		SpliteratorCategoricalVariables spliterator = this.spliterateDomains(ex);
+        return StreamSupport.stream(spliterator, false);
+	}
+	
+	public Stream<Map<NodeCategorical,String>> streamDomains(Collection<NodeCategorical> nn, ExecutionContext ex) {
+		SpliteratorCategoricalVariables spliterator = this.spliterateDomains(nn, ex);
+        return StreamSupport.stream(spliterator, false);
+	}
+	
+	public SpliteratorCategoricalVariables spliterateDomains(ExecutionContext ex) {
+		return new SpliteratorCategoricalVariables(this.enumerateNodes(), ex);
+	}
+	
+	
+	public SpliteratorCategoricalVariables spliterateDomains(Collection<NodeCategorical> nn,ExecutionContext ex) {
+		if (!this.nodes.containsAll(nn))
+			throw new IllegalArgumentException("some of these nodes "+nn+" do not belong this Bayesian network "+this.nodes);
+		return new SpliteratorCategoricalVariables(nn, ex);
+	}
+	
+	public Stream<Map<NodeCategorical,String>> parallelStreamDomains(ExecutionContext ex) {
+		SpliteratorCategoricalVariables spliterator = this.spliterateDomains(ex);
+		return StreamSupport.stream(spliterator, true);
+	}
+	
+	public Stream<Map<NodeCategorical,String>> parallelStreamDomains(Collection<NodeCategorical> nn, ExecutionContext ex) {
+		SpliteratorCategoricalVariables spliterator = this.spliterateDomains(nn, ex);
+		return StreamSupport.stream(spliterator, true);
 	}
 	
 	/**

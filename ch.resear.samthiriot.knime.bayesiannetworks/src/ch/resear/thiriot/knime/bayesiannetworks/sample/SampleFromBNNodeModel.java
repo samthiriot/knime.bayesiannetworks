@@ -8,12 +8,15 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Spliterator;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 import org.knime.core.data.DataCell;
+import org.knime.core.data.DataColumnDomainCreator;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataTableSpec;
@@ -40,19 +43,24 @@ import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 
 import cern.colt.Version;
+import cern.colt.function.DoubleFunction;
 import cern.jet.random.Binomial;
 import cern.jet.random.engine.MersenneTwister;
 import cern.jet.random.engine.RandomEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.DataTableToBNMapper;
 import ch.resear.thiriot.knime.bayesiannetworks.LogIntoNodeLogger;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.ILogger;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.BNUtils;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.CategoricalBayesianNetwork;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.bn.NodeCategorical;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.inference.SimpleConditionningInferenceEngine;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.EntitiesAndCount;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.ForwardSamplingIterator;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.MultinomialRecursiveSamplingIterator;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.MultinomialRecursiveSamplingSpliterator;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.RecursiveSamplingSpliterator;
 import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.RoundAndSampleRecursiveSamplingIterator;
+import ch.resear.thiriot.knime.bayesiannetworks.lib.sampling.RoundAndSampleRecursiveSamplingSpliterator;
 import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortObject;
 import ch.resear.thiriot.knime.bayesiannetworks.port.BayesianNetworkPortSpec;
 
@@ -164,8 +172,16 @@ public class SampleFromBNNodeModel extends NodeModel {
         	}
         	
         	if (m_groupRows.getBooleanValue() && 
-        			!m_generationMethod.getStringValue().equals(ForwardSamplingIterator.GENERATION_METHOD_NAME))
-        		specs.add(new DataColumnSpecCreator("count", IntCell.TYPE).createSpec());
+        			!m_generationMethod.getStringValue().equals(ForwardSamplingIterator.GENERATION_METHOD_NAME)) {
+        		
+        		DataColumnSpecCreator creator = new DataColumnSpecCreator("count", IntCell.TYPE);
+        		creator.setDomain(new DataColumnDomainCreator(
+        				IntCellFactory.create(1), 
+        				IntCellFactory.create(m_count.getIntValue())
+        				).createDomain());
+        		specs.add(creator.createSpec());        		
+        		
+        	}
         	
         	DataColumnSpec[] specsArray = specs.toArray(new DataColumnSpec[specs.size()]);
         	
@@ -180,7 +196,130 @@ public class SampleFromBNNodeModel extends NodeModel {
     private long timestampStart = 0;
     private boolean groupRows = false;
     
-    private class BNToTableSampler implements Callable<BufferedDataTable> {
+    private class SpliteratorSamplerToTable 
+    					implements Callable<BufferedDataTable>,
+    					Consumer<EntitiesAndCount> {
+    	
+    	private final DataTableSpec outputSpec;
+    	private final ExecutionContext exec;
+    	private final int countToSample;
+    	private final CategoricalBayesianNetwork bn;
+    	private final RecursiveSamplingSpliterator<? extends DoubleFunction> it;
+        private final int firstId;
+        private final boolean nostorage;
+
+        private int done = 0;
+        private int rows = 0;
+        private BufferedDataContainer container = null;
+        
+    	public SpliteratorSamplerToTable(
+				CategoricalBayesianNetwork bn,
+				RecursiveSamplingSpliterator<? extends DoubleFunction> it,
+				DataTableSpec outputSpec,
+				ExecutionContext exec,
+				int countToSample,
+				int firstId,
+				boolean nostorage) {
+
+			this.outputSpec = outputSpec;
+			this.exec = exec;
+			this.countToSample = countToSample;
+			this.bn = bn;
+			this.it = it;
+			this.firstId = firstId;
+			this.nostorage = nostorage;
+		}
+	
+		@Override
+		public BufferedDataTable call() throws Exception {
+
+	        container = exec.createDataContainer(outputSpec);
+
+	        try {
+
+		        // ask the spliterator to execute on all the remaining elements
+		        it.forEachRemaining(this);
+		        
+	        } finally {
+	        	container.close();
+	        }
+	        
+			return container.getTable();
+		}
+
+		@Override
+		public void accept(EntitiesAndCount next) {
+
+        	try {
+	        	done += next.count;
+	        	if (next.node2value.isEmpty())
+	        		throw new RuntimeException("no entity generated...");
+	        	totalRowsGenerated += next.count;
+        	} catch (RuntimeException e) {
+        		e.printStackTrace();
+        		throw new RuntimeException("Error when sampling the next entity: "+e.getMessage(), e);
+        	}
+        	
+        	//System.out.println(next);
+			double progress = (double)totalRowsGenerated/countToSample;
+        	long timestampNow = System.currentTimeMillis();
+        	//if (firstId == 0) { // only the first thread makes message updates
+	        	long elapsedSeconds = (timestampNow - timestampStart)/1000;
+	        	if (elapsedSeconds > 2) {
+		        	double entitiesPerSecond = totalRowsGenerated / elapsedSeconds;
+		        	//logger.warn("generating "+((int)entitiesPerSecond)+" rows per second");
+		        	exec.setProgress(progress, "entity "+totalRowsGenerated + " ("+(int)entitiesPerSecond+"/s)");
+	        	} else 
+	        		exec.setProgress(progress);
+
+        	//} 
+        	
+        	if (!nostorage) {
+	        	if (groupRows) {
+		        	// convert to KNIME cells
+		        	DataCell[] results = new DataCell[next.node2value.size()+1];
+		        	int j=0;
+		        	for (NodeCategorical node : bn.getNodesSortedByName()) {
+		        		String valueStr = next.node2value.get(node);
+		        		if (valueStr == null)
+		        			throw new RuntimeException("value for node "+node+" not found");
+		        		results[j++] = node2mapper.get(node).createCellForStringValue(valueStr);
+		        	}
+		        	results[j] = IntCellFactory.create(next.count);
+		        	
+		        	// append
+		        	container.addRowToTable(
+		        			new DefaultRow(
+			        			new RowKey("Row " + (firstId + rows++) ), 
+			        			results
+			        			)
+		        			);
+	        	} else {
+	        		// convert to KNIME cells
+		        	DataCell[] results = new DataCell[next.node2value.size()];
+		        	int j=0;
+		        	for (NodeCategorical node : bn.getNodesSortedByName()) {
+		        		String valueStr = next.node2value.get(node);
+		        		if (valueStr == null)
+		        			throw new RuntimeException("value for node "+node+" not found");
+		        		results[j++] = node2mapper.get(node).createCellForStringValue(valueStr);
+		        	}
+		        	for (int i=0; i<next.count; i++) {
+			        	// append
+			        	container.addRowToTable(
+			        			new DefaultRow(
+				        			new RowKey("Row " + (firstId + rows++) ), 
+				        			results
+				        			)
+			        			);
+		        	}
+	        	}
+        	}
+		}
+    	
+    }
+
+    private class BNToTableForwardSampler implements Callable<BufferedDataTable> {
 
     	private final DataTableSpec outputSpec;
     	private final ExecutionContext exec;
@@ -188,17 +327,15 @@ public class SampleFromBNNodeModel extends NodeModel {
     	private final CategoricalBayesianNetwork bn;
         private final int firstId;
         private final RandomEngine random;
-        private final String method;
         private final boolean nostorage;
         
-    	public BNToTableSampler(
+    	public BNToTableForwardSampler(
     				RandomEngine random, 
     				CategoricalBayesianNetwork bn,
     				DataTableSpec outputSpec,
     				ExecutionContext exec,
     				int countToSample,
     				int firstId,
-    				final String method,
     				boolean nostorage) {
 
     		this.outputSpec = outputSpec;
@@ -207,7 +344,6 @@ public class SampleFromBNNodeModel extends NodeModel {
     		this.bn = bn; //.clone();
     		this.firstId = firstId;
     		this.random = new MersenneTwister(random.nextInt());
-    		this.method = method;
     		this.nostorage = nostorage;
     	}
     	
@@ -216,47 +352,12 @@ public class SampleFromBNNodeModel extends NodeModel {
 
 	        BufferedDataContainer container = exec.createDataContainer(outputSpec);
 
-	        Iterator<EntitiesAndCount> it;
-	        if (method.equals(RoundAndSampleRecursiveSamplingIterator.GENERATION_METHOD_NAME))
-		        it = new RoundAndSampleRecursiveSamplingIterator(
-		        		countToSample, 
-		        		bn, 
-		        		random, 
-		        		new SimpleConditionningInferenceEngine(ilogger, null, bn),
-		        		exec, 
-		        		ilogger);
-	        else if (method.equals(MultinomialRecursiveSamplingIterator.GENERATION_METHOD_NAME))
-	        	it = new MultinomialRecursiveSamplingIterator(
-		        		countToSample, 
-		        		bn, 
-		        		new Binomial(42, 0.1, random), 
-		        		new SimpleConditionningInferenceEngine(ilogger, null, bn),
-		        		exec, 
-		        		ilogger);
-	        else if (method.equals(ForwardSamplingIterator.GENERATION_METHOD_NAME))
-	        	it = new ForwardSamplingIterator(random, bn, countToSample, ilogger);
-	        else
-	        	throw new RuntimeException("Unknown generation method "+method);
-	        
+	        Iterator<EntitiesAndCount> it = new ForwardSamplingIterator(random, bn, countToSample, ilogger);
+		    
 	        int done = 0;
 	        int rows = 0;
 	        while (it.hasNext()) {
-	        	double progress = (double)done/countToSample;
-	        	long timestampNow = System.currentTimeMillis();
-	        	if (firstId == 0) { // only the first thread makes message updates
-		        	String msg = "entity "+done;
 
-		        	long elapsedSeconds = (timestampNow - timestampStart)/1000;
-		        	if (elapsedSeconds > 10) {
-			        	double entitiesPerSecond = totalRowsGenerated / elapsedSeconds;
-			        	//logger.warn("generating "+((int)entitiesPerSecond)+" rows per second");
-			        	msg = msg + " ("+(int)entitiesPerSecond+"/s)";
-		        	}
-		        	exec.setProgress(progress, msg);
-	        	} else {
-	        		exec.setProgress(progress);
-	        	}
-	        	
 	        	EntitiesAndCount next;
 	        	try {
 		        	next = it.next();
@@ -269,6 +370,23 @@ public class SampleFromBNNodeModel extends NodeModel {
 	        		throw new RuntimeException("Error when sampling the next entity: "+e.getMessage(), e);
 	        	}
 	        	//System.out.println(next);
+	        	
+	        	double progress = (double)done/countToSample;
+	        	long timestampNow = System.currentTimeMillis();
+	        	if (firstId == 0) { // only the first thread makes message updates
+		        	String msg = "entity "+totalRowsGenerated;
+
+		        	long elapsedSeconds = (timestampNow - timestampStart)/1000;
+		        	if (elapsedSeconds > 1) {
+			        	double entitiesPerSecond = totalRowsGenerated / elapsedSeconds;
+			        	//logger.warn("generating "+((int)entitiesPerSecond)+" rows per second");
+			        	msg = msg + " ("+(int)entitiesPerSecond+"/s)";
+		        	}
+		        	exec.setProgress(progress, msg);
+	        	}
+	        	//} /* else {
+	        	//	exec.setProgress(progress);
+	        	//}*/
 	        	
 	        	if (!nostorage) {
 		        	if (groupRows) {
@@ -392,34 +510,76 @@ public class SampleFromBNNodeModel extends NodeModel {
         
     	// submit the execution of the threads
         exec.setMessage("sampling");
-        List<BNToTableSampler> samplers = new ArrayList<SampleFromBNNodeModel.BNToTableSampler>(threadsToUse);
-    	{
-    		int countRemaining = countToSample;
+        List<Callable<BufferedDataTable>> samplers = new ArrayList<>(threadsToUse);
+    	
+        if (generationMethod.equals(ForwardSamplingIterator.GENERATION_METHOD_NAME)) {
+        	// if the method is forward sampling, 
+        	// then create n thread having each part of the total to sample
+        	int countRemaining = countToSample;
     		int countDistributed = 0;
+    		ExecutionContext ex = exec.createSubExecutionContext(0.9);
 	        for (int t=0; t<threadsToUse-1; t++) {
 	        	int count = countToSample/threadsToUse;
 	        	countRemaining -= count;
 	        	samplers.add(
-	        			new BNToTableSampler(
+	        			new BNToTableForwardSampler(
 	        					random, bn, outputSpec, 
-	        					exec.createSubExecutionContext(0.9/threadsToUse), 
+	        					ex, 
 	        					count,
 	        					countDistributed,
-	        					generationMethod,
 	        					nostorage
 	        			));
 	        	countDistributed += count;
 	        }
         	samplers.add(
-	        		new BNToTableSampler(
+	        		new BNToTableForwardSampler(
 	    					random, bn, outputSpec, 
-	    					exec.createSubExecutionContext(0.9/threadsToUse), 
+	    					ex, 
 	    					countRemaining,
 	    					countDistributed,
-	    					generationMethod, 
 	    					nostorage
 	    			));
 
+    	} else {
+    		// create the spliterator of interest
+    		RecursiveSamplingSpliterator<? extends DoubleFunction> split = null;
+    		if (generationMethod.equals(RoundAndSampleRecursiveSamplingIterator.GENERATION_METHOD_NAME))
+    			split = new RoundAndSampleRecursiveSamplingSpliterator(
+		        		countToSample, 
+		        		bn, 
+		        		random, 
+		        		new SimpleConditionningInferenceEngine(ilogger, null, bn),
+		        		exec, 
+		        		ilogger);
+	        else if (generationMethod.equals(MultinomialRecursiveSamplingIterator.GENERATION_METHOD_NAME))
+	        	split = new MultinomialRecursiveSamplingSpliterator(
+		        		countToSample, 
+		        		bn, 
+		        		new Binomial(42, 0.1, random), 
+		        		new SimpleConditionningInferenceEngine(ilogger, null, bn),
+		        		exec, 
+		        		ilogger);
+	        else
+	        	throw new RuntimeException("Unknown generation method "+generationMethod);
+	        
+    		// try to split the spliterator as many times as demanded
+    		List<Spliterator<?>> spliterators = BNUtils.splititeratorForParallel(split, threadsToUse);
+    		logger.warn("sampling "+countToSample+" with recursive method \""+generationMethod+"\" using "+spliterators.size()+" parallel threads");
+    		
+    		// now create as many samplers as required
+    		int firstId = 0;
+    		ExecutionContext ex = exec.createSubExecutionContext(0.9);
+    		for (Spliterator<?> spliti: spliterators) {
+    			samplers.add(new SpliteratorSamplerToTable(
+    					bn, 
+    					(RecursiveSamplingSpliterator<? extends DoubleFunction>) spliti, 
+    					outputSpec, 
+    					ex, 
+    					countToSample, 
+    					firstId,
+    					nostorage));
+    			firstId = firstId + countToSample;
+    		}
     	}
         exec.checkCanceled();
 
@@ -443,7 +603,7 @@ public class SampleFromBNNodeModel extends NodeModel {
         BufferedDataTable resTable;
         if (threadsToUse > 1) {
             exec.setProgress("merging tables");
-	        final BufferedDataTable[] resultTables = new BufferedDataTable[threadsToUse];
+	        final BufferedDataTable[] resultTables = new BufferedDataTable[samplers.size()];
 	        for (int i = 0; i < resultTables.length; i++) {
 	            resultTables[i] = results.get(i).get();
 	        }
@@ -463,7 +623,7 @@ public class SampleFromBNNodeModel extends NodeModel {
         return new BufferedDataTable[]{ resTable };
         
 	}
-        
+     
 
     /**
      * {@inheritDoc}

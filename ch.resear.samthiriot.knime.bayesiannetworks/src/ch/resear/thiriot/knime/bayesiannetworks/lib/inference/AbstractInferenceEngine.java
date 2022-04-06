@@ -38,6 +38,10 @@ public abstract class AbstractInferenceEngine {
 		this.logger = logger;
 		this.rng = new Uniform(random);
 	}
+	
+	public CategoricalBayesianNetwork getBN() {
+		return bn;
+	}
 
 	/**
 	 * Adds evidence, in the form p(n=s)=1 | XXX. 
