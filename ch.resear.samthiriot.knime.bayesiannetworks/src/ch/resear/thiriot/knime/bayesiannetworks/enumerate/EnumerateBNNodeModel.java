@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.knime.core.data.DataCell;
+import org.knime.core.data.DataColumnDomainCreator;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataTableSpec;
@@ -127,8 +128,12 @@ public class EnumerateBNNodeModel extends NodeModel {
         		specs.add(node2mapper.get(nodeName).getSpecForNode());
         	}
         	// add a column for the probability
+        	DataColumnSpecCreator creator = new DataColumnSpecCreator("probability", DoubleCell.TYPE);
+        	creator.setDomain(new DataColumnDomainCreator(
+        			DoubleCellFactory.create(0.0), 
+        			DoubleCellFactory.create(1.0)).createDomain());
         	specs.add(
-        		new DataColumnSpecCreator("probability", DoubleCell.TYPE).createSpec()
+        		creator.createSpec()
         	);
         	
         	DataColumnSpec[] specsArray = specs.toArray(new DataColumnSpec[specs.size()]);
